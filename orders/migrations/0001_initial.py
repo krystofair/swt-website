@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('identifier', models.CharField(max_length=32)),
                 ('weight', models.DecimalField(decimal_places=3, max_digits=5)),
-                ('order', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='ordering.order')),
+                ('order', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='orders.order')),
             ],
         ),
         migrations.CreateModel(
@@ -33,7 +33,7 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('name', models.CharField(max_length=64)),
                 ('done', models.BooleanField(default=False)),
-                ('order', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='ordering.order')),
+                ('order', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='orders.order')),
             ],
         ),
     ]

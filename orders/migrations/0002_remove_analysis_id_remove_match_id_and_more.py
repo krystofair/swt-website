@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('ordering', '0001_initial'),
+        ('orders', '0001_initial'),
     ]
 
     operations = [
@@ -27,7 +27,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='analysis',
             name='order',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.DO_NOTHING, to='ordering.order'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.DO_NOTHING, to='orders.order'),
         ),
         migrations.AlterField(
             model_name='match',
@@ -37,6 +37,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='match',
             name='order',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.DO_NOTHING, to='ordering.order'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.DO_NOTHING, to='orders.order'),
         ),
     ]

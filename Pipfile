@@ -8,6 +8,8 @@ django = "*"
 django-rest-framework = "*"
 attrs = "*"
 pandas = "*"
+singleton = "*"
+aleksander = {path = "D:/aleksander"}
 
 [dev-packages]
 
