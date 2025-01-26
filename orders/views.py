@@ -45,7 +45,7 @@ class FilterView(View):
     season = r.POST.get('season', None)
     log.debug(f"post parameters {team=}, {league=}, {country=}, {season=}")
     if team:
-      if not all([league, country, season]):
+      if not all([league, country]):
         ctx.update(filtermatches = wh.Matches.by_team(team))
       else:
         if league and country:
@@ -54,24 +54,24 @@ class FilterView(View):
                      seasons_from_leagues = wh.Names.list_seasons_for_tournament(tournament))
     else:
       tournament = (league, country)
-      if country and league:
+      if all([country, league, season]):
+              ctx.update(filtermatches = wh.Matches.by_season_of_tournament(season, tournament),
+                         seasons_from_leagues = wh.Names.list_seasons_for_tournament(tournament))
+      elif country and league:
         ctx.update(filtermatches = wh.Matches.by_tournament(tournament),
                    seasons_from_leagues = wh.Names.list_seasons_for_tournament(tournament))
       elif country and not all([league, season]):
         ctx.update(filterleagues = wh.Names.list_leagues(country))
-      elif all([country, league, season]):
-        ctx.update(filtermatches = wh.Matches.by_season_of_tournament(season, tournament),
-                   seasons_from_leagues = wh.Names.list_seasons_for_tournament(tournament))
-    r.session['state'] = ctx
     log.debug(f"{ctx=}")
+    #r.session['state'] = ctx    
     return render(request, 'orders/new-order.html', context=ctx)
 
-
+ 
 class ChosenMatchesView(View):
   """Managing state of choices. This will redirect again to `/new/`."""
   def post(self, request, *args, **kwargs):
     try:
-      order_repository = models.OrderRepository.instance()
+      #order_repository = models.OrderRepository.instance()
       order_id = request.session.get('order-id', None)
       state = request.session.get('state', {})
       log.debug(f"{state=}")
@@ -91,7 +91,6 @@ class ChosenMatchesView(View):
     except Exception as e:
       log.exception(e)
     return redirect('/order/new/')
-
 
 
 class OrderNewView(View):

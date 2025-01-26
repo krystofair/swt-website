@@ -104,9 +104,23 @@
                           {% for m in filtermatches %}
                             <tr>
                               <td>
-                                <input class="btn-check" type="checkbox" value="{{ m }}" id="{{ m|slugify }}" name="choices">
-                                <label class="btn w-100" for="{{ m }}">
-                                    {{ m }}
+                                <input class="btn-check" type="checkbox" value="{{ m.match_id }}" id="match-{{ m.match_id }}" name="choices">
+                                <label class="btn w-100" for="match-{{m.match_id}}">
+                                  {% if m.home_score > m.away_score %}
+                                    <u>{{m.home}}</u>
+                                    <b>{{m.home_score}}</b>
+                                  {% else %}
+                                    {{m.home}}
+                                    {{m.home_score}}
+                                  {% endif %}
+                                  :
+                                  {% if m.home_score < m.away_score %}
+                                    <b>{{m.away_score}}</b>
+                                    <u>{{m.away}}</u>
+                                  {% else %}
+                                    {{m.away_score}}
+                                    {{m.away}}
+                                  {% endif %}
                                 </label>
                               </td>
                             </tr>
