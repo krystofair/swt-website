@@ -1,4 +1,5 @@
 from django.apps import AppConfig
+from django.core import signals
 
 
 class OrdersConfig(AppConfig):
@@ -6,4 +7,6 @@ class OrdersConfig(AppConfig):
     name = 'orders'
     
     def ready(self):
-        super().ready()
+        from . import models
+        from analyses import signals as asigs
+        asigs.analysis_complete.connect(models.Result.save_result)

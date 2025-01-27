@@ -26,5 +26,6 @@ urlpatterns = [
   path('order/new/', views.OrderNewView.as_view()),
   path('order/filters/', views.FilterView.as_view()),
   path('order/select/', views.ChosenMatchesView.as_view()),
-  path('order/commit/', views.OrderNewView.as_view())  # method POST
+  path('order/commit/', views.OrderNewView.as_view()),  # method POST
+#   path('orders/create/', views.OrderCreation.as_view(orders.Order())
 ]

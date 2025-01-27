@@ -93,6 +93,37 @@ class ChosenMatchesView(View):
     return redirect('/order/new/')
 
 
+class OrderCreation:
+  """Creating order from new or cloned"""
+  order = None
+  #: ENTRANCE
+  def get(self, request, *args, **kwargs):
+    """receive GET request, start point for creation logic"""
+    self.__load_countries()
+    self.__load_leagues(countries[0], countries[1], countries[2])
+    self.__
+
+  
+  def post(self, request, *args, **kwargs):
+    """receive POST request, end point for creation logic. Here should be sended matches with weights and chosen analyses to execute on them"""
+    match request.POST.get('operation', None):
+      case None: raise
+      case "add-match": pass
+      case "add-analysis": __load
+
+  #: LOGIC
+  def __take_leagues_by_country(self) -> list[dict]:
+    """
+        Returns list of dicts in format: {
+          "country_name": ['league1', 'league2']
+        }
+    """
+  
+  def __list_by_filer(self, filterr):
+
+
+  
+
 class OrderNewView(View):
   def _load_state(self, request):
     if 'state' not in request.session:

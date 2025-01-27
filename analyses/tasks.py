@@ -4,8 +4,7 @@
 import pandas as pd
 
 import warehouse.views as wh
-
-# todo: learning i18 in Django.
+from . import models as my_models
 
 
 def set_name(friendly_name):
@@ -18,8 +17,9 @@ def set_name(friendly_name):
   return wrapper
 
 
+
 @set_name("Analiza rzutów rożnych 1")
-def analyse_corners_line_auto(match_ids: list[str]):
+def analyse_corners_line_auto(matches: list["my_models.OrderMatch"]):
   """
       Wyliczanie sensu ryzyka dla linii w statystyce rzutów rożnych.
       Im mniejsza odległość między liniami tym bardziej warto zagrać wg Twojego ważenia meczów!
@@ -32,13 +32,13 @@ def analyse_corners_line_auto(match_ids: list[str]):
   return frame
 
 @set_name("Korelacja posiadania piłki do wyniku meczu")
-def correlation_bp2result(matches):
+def correlation_bp2result(matches: list["my_models.OrderMatch"]):
   """
       Tutaj nawet nie musi być wyliczanej korelacji jako tako, choć może być, ale wynik będzie pojedynczą cyfrą.
       Chodzi tutaj raczej o takie przedstawienia danych, które będzie do nas przemawiało.
       Znowu mam wrażenie, że to się w ogóle nie opłaca. W sensie takie pojedyncze akcje.
   """
-  frame = wh.Stats.stats('ball-possession', matches)
+  frame = wh.Stats.stats('ball-possession', )
   aleksy_models_match = wh.Match
   if not isinstance(matches[0], aleksy_models_match):
     ms = wh.Matches.by_ids(matches)
@@ -46,7 +46,7 @@ def correlation_bp2result(matches):
   return 0  # brak korelacji XD
 
 @set_name("Szukanie korelacji pomiędzy statystykami")
-def oblicz_korelacje_statystyk_kazdy_z_kazdym(ms):
+def oblicz_korelacje_statystyk_kazdy_z_kazdym(ms: list["my_models.OrderMatch"]):
   """
       I coś takiego będzie się dało już na wykresie wyświetlić.
       Będziemy mieli punkty dla każdej korelacji, których będzie duużo w zakresie -1 do 1.

@@ -5,12 +5,12 @@ log = logging.getLogger(__name__)
 from functools import partialmethod
 import uuid
 
-
 from django.db import models, transaction
 from rest_framework import routers, serializers, viewsets
 
 from singleton.singleton import Singleton
 
+from . import signals
 
 
 # Create your models here.
@@ -20,6 +20,8 @@ class Match: pass
 
 class Order(models.Model):
   draft = models.BooleanField(default=False)
+  
+  #user = models.ForeignKey(django.auth.User)
   """Property for saving order as not planned to execute analyses it have."""
 
   def __init__(self, *args, **kwargs):
@@ -29,6 +31,10 @@ class Order(models.Model):
 
   def _add_or_delete_object(self, set_name_attribute, value, delete=False):
     objs_set = getattr(self, set_name_attribute)
+    # simple validation
+    if (not (isinstance(value, Analysis) and set_name_attribute == 'analyses')
+        or not (isinstance(value, Match) and set_name_attribute == 'matches')):
+      raise TypeError(f"Trying add object with wrong type '{type(value)}' to {set_name_attribute} list")
     if delete:
       try:
         objs_set.remove(value)
@@ -61,7 +67,11 @@ class Order(models.Model):
       m.order = self
       m.save()
     if not self.draft:
-      new_order.send(self)
+      #: send this order to receivers of new_order signal.
+      signals.new_order.send(self)
+  
+  def is_complete(self):
+    return len(self.result_set.count()) == len(self.analysis_set.count())
 
   def save_as_draft(self):
     self.draft = True
@@ -81,27 +91,44 @@ class Match(models.Model):
 
 
 class Analysis(models.Model):
-  name = models.CharField(max_length=64, primary_key=True)
+  name = models.CharField(max_length=128)
   order = models.ForeignKey(Order, on_delete=models.DO_NOTHING)
 
 
+class Result(models.Model):
+  analysis = models.ForeignKey(Analysis, on_delete=models.DO_NOTHING)
+  #: State, for now it is just JSON, features - protobuf.
+  result = models.JSONField()
+  
+  @staticmethod
+  def save_result(sender, **kwargs):
+    """Receiver for `analyses.analysis_complete` signal from analyses app. Check out ready in OrdersConfig."""
+    analysis = kwargs.get('order_analysis', None)
+    result = kwargs.get('result', None)
+    if analysis and result:
+      r = Result()
+      r.analysis = Analysis.objects.get(analysis)
+      r.result = result
+      r.save()
 
-@Singleton
-class OrderRepository:
-  def __init__(self):
-    self.orders = {}
 
-  def add_order(self, o):
-    nid = uuid.uuid4()
-    self.orders.update(nid = o)
-    return nid
+# For now I won't using repository, instead I will use Order.objects manager as repository.
+#@Singleton
+#class OrderRepository(models.Manager):
+  #def __init__(self):
+    #self.orders = {}
 
-  def remove_order(self, order_id):
-    try:
-      del self.orders[order_id]
-    except KeyError:
-      pass
+  #def add_order(self, o):
+    #nid = uuid.uuid4()
+    #self.orders.update(nid = o)
+    #return nid
 
-  def get_order(self, order_id) -> Order:
-    return self.orders.get(order_id, None)
+  #def remove_order(self, order_id):
+    #try:
+      #del self.orders[order_id]
+    #except KeyError:
+      #pass
+
+  #def get_order(self, order_id) -> Order:
+    #return self.orders.get(order_id, None)
 

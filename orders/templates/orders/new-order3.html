@@ -17,7 +17,7 @@
         <select class="form-select form-select-sm w-50" name='country'>
             <option value="" selected>Select country</option>
             {% for country in filtercountries %}
-                <option value="{{ country|slugify }}" >
+                <option value="{{ country }}" >
                     {{ country }}
                 </option>
             {% endfor %}
