@@ -3,6 +3,7 @@ from django.apps import apps
 
 
 import sqlalchemy as sa
+# TODO: set explicit models from aleksander.
 from aleksander.dblayer import *
 from collections import namedtuple
 import pandas as pd
@@ -41,51 +42,50 @@ class Matches(API):
   """API of returning match listing"""
   
   #: aliases for results
-  SimpleMatch = (Match.home, Match.away, Match.home_score, Match.away_score)
+  SimpleMatch = (Match.match_id, Match.home, Match.away, Match.home_score, Match.away_score)
+  
+  @staticmethod
+  def by_ids(mids):
+    """ Simple retrieve match or matches (in Simple format) from DB by its identifier."""
+    query = sa.select(*SimpleMatch).where(Match.match_id.in_(mids))
+    return API._exe_query(query)
       
   @staticmethod
   def by_team(team):
     """ listing all matches which team played"""
-    query = (sa.select(*Matches.SimpleMatch)
-             .where(Match.home == team or Match.away == team))
-    matches = list()
-    try:
-      with sa.orm.Session(wh.dbmgr.eng) as session:
-        for row in session.execute(query).all():
-          matches.append(row._mapping)
-    except Exception as e:
-      log.exception(e)
-    return matches
+    team = sa.or_(Match.home == team, Match.away == team)
+    query = sa.select(*Matches.SimpleMatch).where(team)
+    return API._exe_query(query)
   
   @classmethod
   def by_team_winner(cls, team):
-    q = sa.select(*cls.SimpleMatch).where(
-      (Match.home == team and Match.home_score > Match.away_score)
-      or
-      (Match.away == team and Match.away_score > Match.home_score)
-    )
+    #: where conditions
+    home_winner = sa.and_(Match.home == team, Match.home_score > Match.away_score)
+    away_winner = sa.and_(Match.away == team, Match.away_score > Match.home_score)
+    #: query
+    q = sa.select(*cls.SimpleMatch).where(sa.or_(home_winner, away_winner))
     return API._exe_query(q)
   
   @classmethod
   def by_tournament(cls, tournament):
     """list matches by league + country (I named it as tournament)"""
     league, country = tournament
-    q = sa.select(*cls.SimpleMatch).where(
-      Match.league == league and Match.country == country)
+    q = sa.select(*cls.SimpleMatch).where(sa.and_(Match.league == league, Match.country == country))
     return API._exe_query(q)
   
   @classmethod
   def by_season_of_tournament(cls, season, tournament):
     """name explain everything"""
-    return NotImplemented
+    raise NotImplementedError
   
   @classmethod
   def by_team_in_tournament(cls, team, tournament):
     league, country = tournament
-    q = sa.select(*cls.SimpleMatch).where(
-      (Match.home == team or Match.away == team)
-      and (Match.league == league and Match.country == country)
-    )
+    #: conditions
+    team = sa.or_(Match.home == team, Match.away == team)
+    league_and_country = sa.and_(Match.league == league, Match.country == country)
+    team_and_tournament = sa.and_(team, league_and_country)
+    q = sa.select(*cls.SimpleMatch).where(team_and_tournament)
     return API._exe_query(q)
   
 
@@ -121,7 +121,7 @@ class Names(API):
   def list_seasons_for_tournament(tournament: models.Tournament|tuple[str, str]):
     league, country = tournament
     """seasons only per league"""
-    query = sa.select(Match.season.distinct()).where(Match.league == league and Match.country == country)
+    query = sa.select(Match.season.distinct()).where(sa.and_(Match.league == league, Match.country == country))
     try:
       with sa.orm.Session(wh.dbmgr.eng) as session:
         return list(map(str, session.scalars(query)))
@@ -138,7 +138,7 @@ class Stats(API):
   BasicView = (Statistic.name, Statistic.home, Statistic.away)
   
   @classmethod
-  def stats(cls, names, matches):
+  def stats(cls, names, matches: list[str] | list[Match]):
     """
         Returning pandas dataframe~s~ for passed statistic names.
         ~So query is for all names, but then this grouping it for list by names.~
