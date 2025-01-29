@@ -1,0 +1,66 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamiczne &lt;select&gt;</title>
+</head>
+<body>
+    <!-- <script src="{% static '/assets/js/jquery-3.7.1.min.js' %}"></script> -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <form method="post" action="/orders/search/matches/">
+        <label for="countries">Wybierz kraj:</label>
+        <select id="countries">
+            {% for country in countries %}
+            <option value="{{country}}">{{ country|title }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="leagues">Wybierz ligę:</label>
+        <select id="leagues">
+            <!-- Opcje będą się zmieniać dynamicznie -->
+        </select>
+        <input type="submit" value="Filtruj"/>
+
+        <script>
+
+
+            // Funkcja zmieniająca miasta w zależności od wybranego kraju
+            function updateLeagues() {
+                const firstSelect = document.getElementById('countries');
+                const secondSelect = document.getElementById('leagues');
+                const selectedCountry = firstSelect.value;
+                
+                // Czyszczenie obecnych opcji
+                secondSelect.innerHTML = '';
+
+                // Dodawanie nowych opcji na podstawie wybranego kraju
+                leagues[selectedCountry].forEach(l => {
+                    const option = document.createElement('option');
+                    option.value = l;
+                    option.textContent = l;
+                    secondSelect.appendChild(option);
+                });
+            }
+
+            // Nasłuchiwanie na zmianę wyboru w pierwszym <select>
+            document.getElementById('countries').addEventListener('change', updateLeagues);
+
+            // Obiekt, który zawiera miasta dla każdego kraju
+            $(document).ready(function() {
+                const firstSelect = document.getElementById('countries');
+                var leagues; // Declare a variable to store the data
+                console.log(firstSelect.value)
+                $.get('/leagues/'+firstSelect.value+'/', function(response) {
+                    leagues = response; // Store the data in the variable
+                    console.log(leagues); // You can log or manipulate the data
+                }).fail(function(xhr, status, error) {
+                    console.error('AJAX request failed:', error); // Error handling
+                });
+                updateLeagues();
+            });
+        </script>
+    </form>
+</body>
+</html>

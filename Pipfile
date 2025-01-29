@@ -10,6 +10,7 @@ attrs = "*"
 pandas = "*"
 singleton = "*"
 aleksander = {path = "D:/aleksander"}
+mysqlclient = "*"
 
 [dev-packages]
 

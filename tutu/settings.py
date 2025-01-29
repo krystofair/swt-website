@@ -29,6 +29,10 @@ DEBUG = True
 ALLOWED_HOSTS = ['*']
 
 
+ALEKSANDER_CONFIG_DIR = 'D:\\analityk\\configs'
+os.environ['ALEKSANDER_CONFIG_DIR'] = ALEKSANDER_CONFIG_DIR
+
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -90,9 +94,20 @@ WSGI_APPLICATION = 'tutu.wsgi.application'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
-    'default': {
+    'sqlite': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
+        'OPTIONS': {
+            "timeout": 20
+        }
+    },
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'django',
+        'HOST': '127.0.0.1',
+        'PORT': '3306',
+        'USER': 'django_user',
+        'PASSWORD': '+ob_Dz+yM;Zl2Uj.W1G5',
     }
 }
 

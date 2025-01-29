@@ -17,6 +17,15 @@ def set_name(friendly_name):
   return wrapper
 
 
+@set_name("Testowa analiza - nie robi nic i nie spełnia sygnatury analizy")
+def test_task(any_type_list_as_matches):
+  from string import ascii_letters
+  from math import fabs
+  LEN_ASCII_LETTERS = len(ascii_letters)  # 52
+  cols=pd.Index(list(ascii_letters[:len(any_type_list_as_matches)]))
+  df = pd.DataFrame([any_type_list_as_matches, any_type_list_as_matches], columns=cols)
+  return df
+
 
 @set_name("Analiza rzutów rożnych 1")
 def analyse_corners_line_auto(matches: list["my_models.OrderMatch"]):
@@ -36,7 +45,7 @@ def correlation_bp2result(matches: list["my_models.OrderMatch"]):
   """
       Tutaj nawet nie musi być wyliczanej korelacji jako tako, choć może być, ale wynik będzie pojedynczą cyfrą.
       Chodzi tutaj raczej o takie przedstawienia danych, które będzie do nas przemawiało.
-      Znowu mam wrażenie, że to się w ogóle nie opłaca. W sensie takie pojedyncze akcje.
+      Mam wrażenie, że to się w ogóle nie opłaca. W sensie takie pojedyncze akcje.
   """
   frame = wh.Stats.stats('ball-possession', )
   aleksy_models_match = wh.Match

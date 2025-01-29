@@ -23,9 +23,10 @@ from orders import views
 urlpatterns = [
   # path('', include('dashboard.urls')),  
   path('admin/', admin.site.urls),
-  path('order/new/', views.OrderNewView.as_view()),
-  path('order/filters/', views.FilterView.as_view()),
-  path('order/select/', views.ChosenMatchesView.as_view()),
-  path('order/commit/', views.OrderNewView.as_view()),  # method POST
+  path('orders/create/', views.OrderCreation.as_view()),
+  path('leagues/<str:country>/', views.leagues)
+#   path('orders/filters/', views.FilterView.as_view()),
+#   path('orders/select/', views.ChosenMatchesView.as_view()),
+#   path('orders/save/', views.OrderNewView.as_view()),  # method POST
 #   path('orders/create/', views.OrderCreation.as_view(orders.Order())
 ]
