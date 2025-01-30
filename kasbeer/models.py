@@ -153,7 +153,7 @@ class Job(models.Model):
     """Save method overrided for auto converting from dataframe"""
     #: If df (dataframe) is initialized, so object probably
     if self.df is not None:
-      if isinstance(self.df, pd.DataFrame):
+      if isinstance(self.df, pandas.DataFrame):
         self.result = self.df.to_json()
         self.df = None
     super(Job, self).save(**kwargs)
