@@ -47,7 +47,7 @@ class Matches(API):
   @staticmethod
   def by_ids(mids):
     """ Simple retrieve match or matches (in Simple format) from DB by its identifier."""
-    query = sa.select(*SimpleMatch).where(Match.match_id.in_(mids))
+    query = sa.select(*Matches.SimpleMatch).where(Match.match_id.in_(mids))
     return API._exe_query(query)
       
   @staticmethod
