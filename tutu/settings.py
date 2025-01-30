@@ -29,7 +29,8 @@ DEBUG = True
 ALLOWED_HOSTS = ['*']
 
 
-ALEKSANDER_CONFIG_DIR = 'D:\\analityk\\configs'
+# ALEKSANDER_CONFIG_DIR = 'D:\\analityk\\configs'
+ALEKSANDER_CONFIG_DIR = "/d/analityk/configs"
 os.environ['ALEKSANDER_CONFIG_DIR'] = ALEKSANDER_CONFIG_DIR
 
 
@@ -102,13 +103,22 @@ DATABASES = {
         }
     },
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'django',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'postgres',
         'HOST': '127.0.0.1',
-        'PORT': '3306',
-        'USER': 'django_user',
+        'PORT': '43211',
+        'USER': 'postgres',
         'PASSWORD': '+ob_Dz+yM;Zl2Uj.W1G5',
-    }
+
+    },
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.mysql',
+    #     'NAME': 'django',
+    #     'HOST': '127.0.0.1',
+    #     'PORT': '3306',
+    #     'USER': 'django_user',
+    #     'PASSWORD': '+ob_Dz+yM;Zl2Uj.W1G5',
+    # }
 }
 
 

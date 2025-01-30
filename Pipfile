@@ -9,8 +9,7 @@ django-rest-framework = "*"
 attrs = "*"
 pandas = "*"
 singleton = "*"
-aleksander = {path = "D:/aleksander"}
-mysqlclient = "*"
+aleksander = {path = "/d/aleksander"}
 django-guardian = "*"
 
 [dev-packages]

@@ -13,4 +13,4 @@ class WarehouseConfig(AppConfig):
         #: add additional kwargs when creating engine if aleksander module is in 1.2.0 version.
         pool_kwargs = dict(pool_size=10, max_overflow=0)
         pool_kwargs = pool_kwargs if aleksander.__version__ == "1.2.0" else dict()
-        self.dbmgr = dblayer.DbMgr('sqlite', **pool_kwargs)
+        self.dbmgr = dblayer.DbMgr('postgresql', **pool_kwargs)
