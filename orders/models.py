@@ -1,17 +1,16 @@
-import importlib
-import logging
-from functools import partialmethod
-import uuid
-
+import pandas
+from django.db import models
+from rest_framework import routers, serializers, viewsets
+from singleton.singleton import Singleton
 try:
   import orjson as jsonlib
 except:
   import json as jsonlib
-import pandas
-from django.db import models
-from rest_framework import routers, serializers, viewsets
 
-from singleton.singleton import Singleton
+import importlib
+import logging
+from functools import partialmethod
+import uuid
 
 from . import signals
 
@@ -21,7 +20,7 @@ from . import signals
 class Order(models.Model):
   draft = models.BooleanField(default=False)
   complete = models.BooleanField(default=False)
-  
+
   #user = models.ForeignKey(django.auth.User)
   """Property for saving order as not planned to execute analyses it have."""
 
@@ -31,36 +30,33 @@ class Order(models.Model):
     self.matches = list()
     self.log = logging.getLogger("orders")
 
-  def _add_or_delete_object(self, set_name_attribute, value, delete=False):
-    objs_set = getattr(self, set_name_attribute)
-    # simple validation
-    # if (not (isinstance(value, Analysis) and set_name_attribute == 'analyses')
-    #     or not (isinstance(value, Match) and set_name_attribute == 'matches')):
-    #   raise TypeError(f"Trying add object with wrong type '{type(value)}' to {set_name_attribute} list")
-    if delete:
-      try:
-        objs_set.remove(value)
-      except ValueError:
-        self.log.warning("Try of removing item not on list. Not important, but something is bad designed.")
-    else:
-      if isinstance(value, list):
-        objs_set.extend(value)
-      else:
-        objs_set.append(value)
-    return None
-  add_analysis = partialmethod(_add_or_delete_object, "analyses", delete=False)
-  del_analysis = partialmethod(_add_or_delete_object, "analyses", delete=True)
-  add_match = partialmethod(_add_or_delete_object, "matches", delete=False)
-  del_match = partialmethod(_add_or_delete_object, "matches", delete=True)
+  def append(self, value):
+    match value:
+      case Analysis():
+        self.analyses.append(value)
+      case Match():
+        self.matches.append(value)
 
-  def save(self):
+  def remove(self, value):
+    try:
+      match value:
+        case Analysis():
+          try:
+            self.analyses.remove(value)
+        case Match():
+            self.matches.remove(value)
+    except ValueError:
+      self.log.warning("Try of removing item not on list."
+                       "Not important, but something is bad designed.")
+
+  def save(self, **kwargs):
     if not self.draft:
       if not self.analyses:
         raise ValueError("This order has no analyses to do")
       if not self.matches:
         raise ValueError("This order has no matches!")
     #: Actual saving
-    super().save()
+    super(Order, self).save(**kwargs)
     for a in self.analyses:
       a.order = self
       a.save()
@@ -69,10 +65,9 @@ class Order(models.Model):
       m.save()
     if not self.draft:
       #: send this order to receivers of new_order signal.
+      #: theoretically it enough to use post_save signal, but draft will be sent then too.
+      #: And this is should not be in another logic.
       signals.new_order.send(self)
-  
-  def is_complete(self):
-    return len(self.result_set.count()) == len(self.analysis_set.count())
 
   def save_as_draft(self):
     self.draft = True
@@ -84,6 +79,13 @@ class Order(models.Model):
     new_order.analyses = self.analyses.copy()
     return new_order
 
+  def product(self):
+    """Build product as website fragment. Collect results from jobs"""
+    # app = pydash  # ?
+    # for job in self.job_set.all():
+    #   analyses.api.visual(job.name, job.df)
+    #   template_view = view(job.df)
+
 
 class Match(models.Model):
   identifier = models.CharField(max_length=32, primary_key=True)
@@ -91,10 +93,10 @@ class Match(models.Model):
   order = models.ForeignKey(Order, on_delete=models.CASCADE)
 
 
-class Analysis(models.Model):
+class Job(models.Model):
   name = models.CharField(max_length=128, primary_key=True)
   order = models.OneToOneField(Order, on_delete=models.CASCADE)
-
+  result = models.JSONField(default=None)
 
 
 # For now I won't using repository, instead I will use Order.objects manager as repository.

@@ -47,8 +47,8 @@ class Analysis(models.Model):
       super().save(**kwargs)
     except:
       raise
-      
-  
+
+
   def find_task(self):
     """Returns function from python code as code. This task could be called."""
     tasks = importlib.import_module(ANALYSES_MODULE)
@@ -66,12 +66,13 @@ class Result(models.Model):
   analysis = models.OneToOneField(Analysis, on_delete=models.CASCADE)
   #: State, for now it is just JSON, features - protobuf.
   dataframe = models.JSONField()
-  
+
   def df(self) -> pandas.DataFrame:
     return pandas.DataFrame.from_dict(jsonlib.loads(self.dataframe))
-    
+
   def save(self, **kwargs):
     if isinstance(self.dataframe, pd.DataFrame):
       self.dataframe = self.dataframe.to_json()
     super(Result, self).save(**kwargs)
-  
+
+

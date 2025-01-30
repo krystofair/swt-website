@@ -1,3 +1,4 @@
+from django.dispatch import receiver
 import pandas
 
 import queue
@@ -8,7 +9,7 @@ try:
 except ModuleNotFoundError:
   import json as jsonlib
 
-from . import models #, signals
+from . import models, signals
 
 
 class MatchService:
@@ -50,29 +51,36 @@ class Engine:
     try:
       while not self.orders_que.empty():
         process_order_thread.start()
+        self.log.debug("order thread started")
         process_order_thread.join(timeout=TIMEOUT)  # two minute is enough for single order?
         # PROPOSAL: maybe wait some time for probability of taken new order in this time,
         #           so this wont quit from this thread.
     except TimeoutError:
       self.log.error(f"Processing order {self.order!r} last over {TIMEOUT}s.")
+    self.log.debug("orders processing ended")
 
   def __process_order(self):
     results = 0
     #: get order from queue
     order = self.orders_que.get()
+    self.log.debug("PROCESS SINGLE ORDER STARTED")
+    self.log.debug(f"{order.job_set.all()=}")
     
-    for analysis in order.analysis_set.all():
+    for job in order.job_set.all():
       #: search reference analysis by name
+      analysis = job.analysis()
       try:
         self.log.debug(f"{order=}, {analysis=}")
         self.log.debug(models.Analysis.objects.all())
         #: WARNING! If this can be run by specific user? Where the user object coming from?  - from order see orders.models
-        task = analysis.find_task()
+        task = analysis.task()
         #task.delay() # XXX: this will be in power when use celery.
-        df: "pandas.DataFrame" = task(order.matches)
+        df: "pandas.DataFrame" = task(list(order.match_set.all()))
         results += 1
-        result = models.Result(dataframe=df, analysis=analysis)
-        result.save()
+        job.df = df
+        self.log.debug(job.df)
+        job.save()
+        self.log.debug(f"{job.result=}")
         #signals.analysis_complete.send(analysis.copy())
       except models.Analysis.DoesNotExist:
         self.log.warning("User choose analysis which wasn't add by admin.")
@@ -84,3 +92,4 @@ class Engine:
     #signals.order_complete.send(order)
     order.complete = True
     order.save()
+    self.log.debug("PROCESS SINGLE ORDER ENDED")

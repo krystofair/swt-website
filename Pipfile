@@ -11,6 +11,7 @@ pandas = "*"
 singleton = "*"
 aleksander = {path = "D:/aleksander"}
 mysqlclient = "*"
+django-guardian = "*"
 
 [dev-packages]
 

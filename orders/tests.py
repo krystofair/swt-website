@@ -10,13 +10,13 @@ class TcOrder(TestCase):
     self.matches = [ { "identifier":"1", "weight":0.4 },
                 { "identifier":"2", "weight":1.2 },
                 { "identifier":"3", "weight":-0.3 }
-              ]   
-    
+              ]
+
   def test_create_new_order(self):
     #: create order object per session
     order = Order(draft=False)
     #: Order not draft cannot be saved without matches or analyses.
-    with TestCase.assertRaises(ValueError):
+    with self.assertRaises(ValueError):
       order.save()
     #: Prepare analyses and matches mocks, with assigned order
     obj_analyses = [Analysis(**a, order=order) for a in self.analyses]
@@ -28,18 +28,13 @@ class TcOrder(TestCase):
       order.add_analysis(a)
     #: Saving order in good state.
     order.save()
-    ##### checks #####
+    #: Checks
     orders = Order.objects.all()
     assert len(orders) == 1
     o = orders[0]
     try: obj_analyses.index(o.analysis_set.filter(name="A").get())
     except: assert False, "There should be this analysis, probably at last position"
     else: assert True
-    ###################
-    #: This is important to remember, we saved analyses for order after saving order this
-    o.analyses.clear()  # clear analyses list, this action will never happen, cause we don't manipulate it from python internals
-    o.draft = True
-    o.save()
     
   def test_saving_order_as_a_whole_not_alone_parts(self):
     order = Order()

@@ -33,11 +33,8 @@ class AnalysisModelAndTask(TestCase):
         assert result.loc[0,'c'] == 3
         assert result.iloc[1, 1] == 2
 
-from django.db.transaction import atomic
-
 class TestEngine(TestCase):
 
-    
     @classmethod
     def setUpClass(cls):
         #: prepare analysis added by admin.

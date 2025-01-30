@@ -1,15 +1,31 @@
 """
     Set of function which converting data to meanings. The __doc__ of function is for description in model.Analysis.
 """
+from django.contrib import admin
+from django.utils.text import slugify
 import pandas as pd
 
 import importlib
 
 import warehouse.views as wh
-from . import models as my_models
 
 
 ANALYSES_MODULE = 'kasbeer.tasks'
+
+#def analysis(name, **options):
+  #def _from_fun(func):
+    ##: Title all then split by space in order to join it again without spaces.
+    #only_ascii_name = slugify(name)
+    #class_name = ''.join(only_ascii_name.replace('-', ' ').title().split(' '))
+    #analysis_new_class = type(class_name, (models.Model,), dict({
+      #'name': name,
+      #'task_func': func.__qualname__,
+      #'db_table': "analyses",
+      #'__doc__': func.__doc__,
+      #'__module__': func.__module__,
+      #'__annotations__': func.__annotations__
+      #}, **options))()
+  #return _from_fun
 
 def collect_tasks() -> list[dict]:
   names: list[dict] = list()
@@ -18,6 +34,7 @@ def collect_tasks() -> list[dict]:
     prop = getattr(mtasks, f)
     if hasattr(prop, '__analysis_name__'):
       names.append(dict(
+        analysis = prop,
         name = prop.__analysis_name__,
         task_func = prop.__qualname__,
         description = prop.__doc__
@@ -25,11 +42,11 @@ def collect_tasks() -> list[dict]:
   return names
 
 def prepare_choices_tasks(tasks: list[dict]):
-  yield from ((t['name'], t['task_func']) for t in tasks)
+  yield from ((t['task_func'], t['name']) for t in tasks)
   
 def set_name(friendly_name):
   """
-      Setting name for analysis model by decorator it is for be visiable nicely when Admin will add permission.
+  Setting name for analysis model by decorator it is for be visiable nicely when Admin will add permission.
   """
   def wrapper(f):
     f.__analysis_name__ = friendly_name
@@ -37,13 +54,15 @@ def set_name(friendly_name):
   return wrapper
 
 
-@set_name("Testowa analiza - nie robi nic i nie spełnia sygnatury analizy")
-def test_task(any_type_list_as_matches):
-  from string import ascii_letters
-  from math import fabs
-  LEN_ASCII_LETTERS = len(ascii_letters)  # 52
-  cols=pd.Index(list(ascii_letters[:len(any_type_list_as_matches)]))
-  df = pd.DataFrame([any_type_list_as_matches, any_type_list_as_matches], columns=cols)
+
+@set_name("Test dodawania analizy")
+def test_add_analysis_choices(matches):
+  return test_task(matches)
+
+@set_name("Testowa analiza")
+def test_task(matches):
+  cols = pd.Index(list['abcd'])
+  df = pd.DataFrame([1,2,3,4], [5,6,7,8], columns=cols)
   return df
 
 

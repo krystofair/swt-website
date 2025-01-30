@@ -43,10 +43,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'orders',
-    'analyses',
-    'dashboard',
-    'warehouse'
+    'guardian',
+    'warehouse',
+    'kasbeer',
+    'dashboard'
 ]
 
 MIDDLEWARE = [
@@ -129,6 +129,12 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+# django-guardian
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend', # default
+    'guardian.backends.ObjectPermissionBackend',
+)
 
 
 # Internationalization
