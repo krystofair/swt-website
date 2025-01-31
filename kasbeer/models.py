@@ -15,6 +15,7 @@ import importlib
 import logging
 from functools import partialmethod
 import uuid
+from datetime import datetime
 
 #: project imports
 from . import signals
@@ -27,14 +28,20 @@ from .tasks import collect_tasks, prepare_choices_tasks, ANALYSES_MODULE
 class Order(models.Model):
   draft = models.BooleanField(default=False)
   complete = models.BooleanField(default=False)
-  # when user is deleted then all its orders gone.
-  #user = models.ForeignKey(django.auth.User, on_delete=models.CASCADE)
+  created = models.DateTimeField(verbose_name="creation datetime", auto_created=True, auto_now=True)
+  # user = models.ForeignKey(User, on_delete=models.CASCADE)
 
   def __init__(self, *args, **kwargs):
     super().__init__(*args, **kwargs)
     self.jobs = list()
     self.matches = list()
     self.log = logging.getLogger("orders")
+
+  def __str__(self):
+    compl = '✅️' if self.complete else '🔜️'
+    d = ' DRAFT' if self.draft else ''
+    creat = self.created.isoformat()
+    return f"Order({creat}) {compl}{d}"
 
   def append(self, value):
     match value:
@@ -58,9 +65,12 @@ class Order(models.Model):
 
   def save(self, **kwargs):
     if not self.draft:
-      if not self.jobs:
+      # count exist already jobs and matches
+      count_jobs = self.job_set.count()
+      count_matches = self.match_set.count()
+      if not self.jobs and count_jobs == 0:
         raise ValueError("This order has no jobs to do")
-      if not self.matches:
+      if not self.matches and count_matches == 0:
         raise ValueError("This order has no matches!")
     #: Actual saving
     super(Order, self).save(**kwargs)
@@ -73,7 +83,7 @@ class Order(models.Model):
     if not self.draft:
       #: send this order to receivers of new_order signal.
       #: theoretically it enough to use post_save signal, but draft will be sent then too.
-      #: And this is should not be in another logic.      
+      #: And this is should not be in another logic.
       signals.new_order.send(self)
 
   def save_as_draft(self):
@@ -137,7 +147,7 @@ class Analysis(models.Model):
 class Job(models.Model):
   """Analysis in order"""
   order = models.ForeignKey(Order, on_delete=models.CASCADE)
-  analysis_name = models.CharField(max_length=128)
+  analysis_name = models.CharField(max_length=128, choices=prepare_choices_tasks(collect_tasks()))
   result = models.JSONField(null=True)
   #: There is better method for doing this - converting field, solution for short time.
   df = None
