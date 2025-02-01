@@ -37,4 +37,7 @@ class OrderAdmin(admin.ModelAdmin):
   def save_model(self, request, obj, form, change):
     # TODO: place when we see inlines saved with model. Here we should add inlines to obj in order to save them with it
     # or remove them.
+    if change:
+      pass
+    obj.validate(raise_exception=True)
     super().save_model(request, obj, form, change)

@@ -56,24 +56,29 @@ class Order(models.Model):
     try:
       match value:
         case Job():
-            self.jobs.remove(value)
+          self.jobs.remove(value)
         case Match():
-            self.matches.remove(value)
+          self.matches.remove(value)
     except ValueError:
       self.log.warning("Try of removing item not on list."
                        "Not important, but something is bad designed.")
 
-  def save(self, **kwargs):
-    if not self.draft:
-      # count exist already jobs and matches
-      count_jobs = self.job_set.count()
-      count_matches = self.match_set.count()
-      if not self.jobs and count_jobs == 0:
-        raise ValueError("This order has no jobs to do")
-      if not self.matches and count_matches == 0:
-        raise ValueError("This order has no matches!")
+  def validate(self, raise_exception=False):
+    if len(self.jobs) == 0 or len(self.matches) == 0:
+      if raise_exception:
+        raise ValueError("Order has to have at least one analysis and one match")
+      return False
+    return True
+
+  def save_from_gui(self, **kwargs):
+    #: before in view logic, created analyses and matches object should be added to this aggregate.
+    self.validate(raise_exception=True)
+    # if self.validate():
+      # raise ValueError("Should be handled by showing modal to client. With info.")
     #: Actual saving
+    #: First save order
     super(Order, self).save(**kwargs)
+    #: Saving related objects with setting parent.
     for j in self.jobs:
       j.order = self
       j.save()
@@ -87,6 +92,7 @@ class Order(models.Model):
       signals.new_order.send(self)
 
   def save_as_draft(self):
+    """For action to save order for later as a draft, cause user don't see checkbox with [x]draft."""
     self.draft = True
     self.save()
 
@@ -112,7 +118,7 @@ class Analysis(models.Model):
       ("view", "can_view_analysis"),
       ("run", "can_run_analysis")
     )
-    
+
   name = models.CharField(primary_key=True, max_length=128)
   #: Choices here are badly designed, because deploy require do migrations.
   #: TODO: Do choices dynamic, but in form probably it should be.
@@ -129,10 +135,10 @@ class Analysis(models.Model):
       super().save(**kwargs)
     except:
       raise
-    
+
   def __repr__(self):
     return f"Analysis<{self.task_func}>"
-  
+
   def __str__(self):
     return self.name
 

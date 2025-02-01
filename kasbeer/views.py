@@ -52,8 +52,10 @@ class FilteringForm(forms.Form):
 
     team = forms.CharField(required=False)
     country = forms.ChoiceField(choices=[(c, c.title()) for c in wh.Names.list_countries()])
-    league = forms.ChoiceField(choices=choices.CallableChoiceIterator(functools.partial(wh.Names.list_leagues, country.)))
-    season = forms.ChoiceField(choices=choices.CallableChoiceIterator(functools.partial(wh.Names.list_seasons_for_tournament, (league, country))))
+    league = forms.ChoiceField(choices=choices.CallableChoiceIterator(functools.partial(wh.Names.list_leagues,
+                                                                                        country)))
+    season = forms.ChoiceField(choices=choices.CallableChoiceIterator(functools.partial(
+        wh.Names.list_seasons_for_tournament, (league, country))))
 
     def __init__(self, *args, **kwargs):
         self.matches = []
