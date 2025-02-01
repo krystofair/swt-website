@@ -46,8 +46,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'guardian',
     'warehouse',
-    'kasbeer',
-    'dashboard'
+    'kasbeer'
 ]
 
 MIDDLEWARE = [
@@ -70,12 +69,12 @@ REST_FRAMEWORK = {
     ]
 }
 
-DASHBOARD_TEMPLATES = os.path.join(BASE_DIR, 'dashboard', 'templates')
+KASBEER_TEMPLATES = os.path.join(BASE_DIR, 'kasbeer', 'templates')
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [DASHBOARD_TEMPLATES],
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -83,7 +82,15 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-            ],
+            ]
+        }
+    },
+    {
+        'BACKEND': 'django.template.backends.jinja2.Jinja2',
+        'DIRS': [KASBEER_TEMPLATES],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'environment': 'tutu.jinja2.environment'
         },
     },
 ]

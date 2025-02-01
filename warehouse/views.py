@@ -76,7 +76,7 @@ class Matches(API):
   @classmethod
   def by_season_of_tournament(cls, season, tournament):
     """name explain everything"""
-    raise NotImplementedError
+    return []
   
   @classmethod
   def by_team_in_tournament(cls, team, tournament):

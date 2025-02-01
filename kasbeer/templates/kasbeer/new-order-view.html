@@ -1,0 +1,36 @@
+{% extends 'kasbeer/base-site.html' %}
+{% block title %} Ordering {% endblock %}
+
+{% block stylesheets %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ static('windows-95-ui-kit/css/w95.css') }}">
+{% endblock stylesheets%}
+
+{% block sidebar %}
+    {{ super() }}
+    <div id="match-filtering" class="k3 card-tertiary">
+        <div class="card-header"> Search by ... </div>
+        <div class="card-body">
+            <form method="post" action="/orders/create/">
+                <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                    {{ view.form.as_div() }}
+                <button class="btn btn-primary" type="submit"> Search </button>
+            </form>
+        </div>
+    </div>
+    <div id="other-actions" class="ky card-tertiary">
+        <div class="card-header"> Inne akcje </div>
+        <div class="card-body">
+            <div class="btn btn-secondary"> Pokaż wybrane </div>
+            <div class="btn btn-secondary"> Wybierz analizy </div>
+            <div class="btn btn-primary"> Wyślij </div>
+        </div>
+    </div>
+{% endblock sidebar %}
+
+{% block content %}
+    {{ super() }}
+    {% for match in matches %}
+        {% include 'kasbeer/match-selector-component.html' %}
+    {% endfor %}
+{% endblock %}

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+    {# {% load static %} #}
+{% block head %}
+
+    {% block meta %}
+        <meta charset='utf-8'>
+        <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+        <title>&copy;swt | {% block title %} base view {% endblock %}</title>
+        <meta name='viewport' content='width=device-width, initial-scale=1'>
+    {% endblock meta %}
+
+    {% block stylesheets %}
+        <link rel="stylesheet" href="{{ static('vendors/bootstrap-5.3.3-dist/css/bootstrap.min.css')}}">
+        {# <link rel="stylesheet" href="{{ static('vendors/bootstrap-5.3.3-dist/css/bootstrap-grid.css')}}"> #}
+        <link rel="stylesheet" href="{{ static('kasbeer/css/custom.css') }}">
+        
+    {% endblock stylesheets %}
+
+    
+
+{% endblock head %}
+</head>
+<body  data-bs-theme="light">
+{% block body %}
+    {% if show_modal %}
+        {#
+            Block for shows modal at the top of anything else like in bootstrap docs described. 
+            Children can simply define this block as static content they use and then sterring it
+            by `show_modal` variable.
+        #}
+        {% block modal %}
+        {% endblock %}
+    {% endif %}
+    <div class="ko container"> 
+        <div class="row"> {# ROW FOR TWO COLUMNS #}
+            <div id="content" class="col-8">
+                <header>
+                {% block header %}
+                    <p class="k3">
+                        <b> Title of view: {{ view.title }} </b>
+                    </p>
+                {% endblock header %}
+                </header>
+                <!-- And others stuff -->
+            {% block content %}
+                content
+            {% endblock content %}
+            </div>
+            <div id="sidebar" class="col-4">
+            {% block sidebar %}
+
+                <div class="k2"> {{ request.user.username if request.user.is_authenticated else 'The Anonymous' }} </div>
+
+            {% endblock sidebar %}
+            </div>
+        </div> {# ROW ENDS HERE #}
+        <footer class="k1">
+        {% block footer %}
+            <p> Footer: &copy;krystofair 2025 </p>
+        {% endblock footer %}
+        </footer>
+    </div>
+
+    {% block javascripts %}
+        {# <!-- jQuery -->
+        <script src="/static/vendors/jquery/dist/jquery.min.js"></script>
+        <!-- Bootstrap -->
+        <script src="/static/vendors/bootstrap/dist/js/bootstrap.min.js"></script>
+        <!-- FastClick -->
+        <script src="/static/vendors/fastclick/lib/fastclick.js"></script>
+        <!-- NProgress -->
+        <script src="/static/vendors/nprogress/nprogress.js"></script>
+        <!-- bootstrap-progressbar -->
+        <script src="/static/vendors/bootstrap-progressbar/bootstrap-progressbar.min.js"></script>
+        <!-- iCheck -->
+        <script src="/static/vendors/iCheck/icheck.min.js"></script>
+        <!-- bootstrap-daterangepicker -->
+        <script src="/static/vendors/moment/min/moment.min.js"></script>
+        <script src="/static/vendors/bootstrap-daterangepicker/daterangepicker.js"></script>
+        <!-- bootstrap-wysiwyg -->
+        <script src="/static/vendors/bootstrap-wysiwyg/js/bootstrap-wysiwyg.min.js"></script>
+        <script src="/static/vendors/jquery.hotkeys/jquery.hotkeys.js"></script>
+        <script src="/static/vendors/google-code-prettify/src/prettify.js"></script>
+        <!-- jQuery Tags Input -->
+        <script src="/static/vendors/jquery.tagsinput/src/jquery.tagsinput.js"></script>
+        <!-- Switchery -->
+        <script src="/static/vendors/switchery/dist/switchery.min.js"></script>
+        <!-- Select2 -->
+        <script src="/static/vendors/select2/dist/js/select2.full.min.js"></script>
+        <!-- Parsley -->
+        <script src="/static/vendors/parsleyjs/dist/parsley.min.js"></script>
+        <!-- Autosize -->
+        <script src="/static/vendors/autosize/dist/autosize.min.js"></script>
+        <!-- jQuery autocomplete -->
+        <script src="/static/vendors/devbridge-autocomplete/dist/jquery.autocomplete.min.js"></script>
+        <!-- starrr -->
+        <script src="/static/vendors/starrr/dist/starrr.js"></script> #}
+      <!-- Custom Theme Scripts -->
+      <script src="{{ static('kasbeer/js/custom.js')}}"></script>
+      <script src="{{ static('windows-95-ui-kit/js/w95.js')}}"></script>
+    {% endblock javascripts %}
+{% endblock body %}
+</body>
+</html>

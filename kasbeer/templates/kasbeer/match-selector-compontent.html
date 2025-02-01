@@ -1,0 +1,12 @@
+{# So here should be accessible match variable from parent's for statement #}
+<div id="match-to-select">
+    {% if match %}
+        {{match.home}} vs {{match.away}} z wynikiem {{match.home_score}}:{{match.away_score}}
+    {% endif %}
+    HOME vs AWAY z wynikiem 3:0
+
+
+{% if additional_stats %}
+    <b>{{ stat.name }}</b>:{{}}:{{}}
+{% endif %}
+</div>

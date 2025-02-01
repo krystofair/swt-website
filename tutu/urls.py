@@ -17,16 +17,25 @@ Including another URLconf
 from django.urls import path, include
 from django.contrib import admin
 from rest_framework import routers, serializers, viewsets
-from orders import views
+from kasbeer import views
 
+class A(views.TemplateView):
+    template_engine = 'jinja2'
+    title = "Tworzenie orderu :O"
+
+    def get(self, request, template_name, *args, **kwargs):
+        template_name = template_name.rstrip('.html')
+        self.template_name = f"/kasbeer/{template_name}.html"
+        return super().get(request, *args, **kwargs)
 
 urlpatterns = [
-  # path('', include('dashboard.urls')),  
-  path('admin/', admin.site.urls),
-  path('orders/create/', views.OrderCreation.as_view()),
-  path('leagues/<str:country>/', views.leagues)
-#   path('orders/filters/', views.FilterView.as_view()),
-#   path('orders/select/', views.ChosenMatchesView.as_view()),
-#   path('orders/save/', views.OrderNewView.as_view()),  # method POST
-#   path('orders/create/', views.OrderCreation.as_view(orders.Order())
+    # path('', include('dashboard.urls')),
+    path('admin/', admin.site.urls),
+    path('orders/create/', views.OrderCreation.as_view()),
+    path('leagues/<str:country>/', views.leagues),
+    path('test/kasbeer/<str:template_name>', A.as_view())
+    #   path('orders/filters/', views.FilterView.as_view()),
+    #   path('orders/select/', views.ChosenMatchesView.as_view()),
+    #   path('orders/save/', views.OrderNewView.as_view()),  # method POST
+    #   path('orders/create/', views.OrderCreation.as_view(orders.Order())
 ]

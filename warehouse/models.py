@@ -12,3 +12,5 @@ from collections import namedtuple
 # Create your models here.
 
 Tournament = namedtuple('Tournament', ['league', 'country'])
+
+
