@@ -30,6 +30,12 @@ class MatchInline(admin.TabularInline):
   def has_add_permission(self, request, obj):
     return False
 
+  def has_delete_permission(self, request, obj=None):
+    return False
+
+  def has_change_permission(self, request, obj=None):
+    return False
+
   # XXX: There is possible to exclude editable too, by permissions.
   # XXX: Maybe it's not possible, but there is a class which checks permission of it.
 

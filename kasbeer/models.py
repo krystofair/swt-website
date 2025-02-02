@@ -105,8 +105,10 @@ class Order(models.Model):
 
 class Match(models.Model):
   """This is like Value Object"""
+  class Meta:
+    verbose_name_plural = "matches"
   identifier = models.CharField(max_length=32)
-  weight = models.DecimalField(max_digits=5, decimal_places=3)
+  weight = models.DecimalField(max_digits=5, decimal_places=2)
   order = models.ForeignKey(Order, on_delete=models.CASCADE)
 
 
