@@ -9,11 +9,12 @@
         <meta http-equiv='X-UA-Compatible' content='IE=edge'>
         <title>&copy;swt | {% block title %} base view {% endblock %}</title>
         <meta name='viewport' content='width=device-width, initial-scale=1'>
+        {% block blockbots %}<meta name="robots" content="NONE,NOARCHIVE">{% endblock %}
     {% endblock meta %}
 
     {% block stylesheets %}
-        <link rel="stylesheet" href="{{ static('vendors/bootstrap-5.3.3-dist/css/bootstrap.min.css')}}">
-        {# <link rel="stylesheet" href="{{ static('vendors/bootstrap-5.3.3-dist/css/bootstrap-grid.css')}}"> #}
+        <link rel="stylesheet" href="{{ static('vendors/bootstrap-5.3.3-dist/css/bootstrap.min.css') }}">
+        {# <link rel="stylesheet" href="{{ static('vendors/bootstrap-5.3.3-dist/css/bootstrap-grid.css') }}"> #}
         <link rel="stylesheet" href="{{ static('kasbeer/css/custom.css') }}">
         
     {% endblock stylesheets %}
@@ -51,8 +52,15 @@
             <div id="sidebar" class="col-4">
             {% block sidebar %}
 
-                <div class="k2"> {{ request.user.username if request.user.is_authenticated else 'The Anonymous' }} </div>
-
+                <div class="k2">
+                    {% if request.user.is_authenticated %}
+                        {{ request.user.username }}
+                    {% else %}
+                     The Anonymous | <a href="/admin/login?next=/test/testing/"> Please login. </a>
+                    {% endif %}
+                    {# {{ request.user.username if request.user.is_authenticated else 'The Anonymous' }} #}
+                </div>
+                
             {% endblock sidebar %}
             </div>
         </div> {# ROW ENDS HERE #}

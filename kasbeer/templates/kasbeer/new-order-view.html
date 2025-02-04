@@ -11,9 +11,9 @@
     <div id="match-filtering" class="k3 card-tertiary">
         <div class="card-header"> Search by ... </div>
         <div class="card-body">
-            <form method="post" action="/orders/create/">
+            <form method="post">
                 <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-                    {{ view.form.as_div() }}
+                    {{ form.as_div() }}
                 <button class="btn btn-primary" type="submit"> Search </button>
             </form>
         </div>
@@ -31,6 +31,9 @@
 {% block content %}
     {{ super() }}
     {% for match in matches %}
-        {% include 'kasbeer/match-selector-component.html' %}
+        {{ match }}
     {% endfor %}
+    <script>
+
+    </script>
 {% endblock %}
