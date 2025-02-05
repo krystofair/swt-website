@@ -7,7 +7,7 @@
     {% block meta %}
         <meta charset='utf-8'>
         <meta http-equiv='X-UA-Compatible' content='IE=edge'>
-        <title>&copy;swt | {% block title %} base view {% endblock %}</title>
+        <title>&copy;swt | {% block title %} bazowy widok {% endblock %}</title>
         <meta name='viewport' content='width=device-width, initial-scale=1'>
         {% block blockbots %}<meta name="robots" content="NONE,NOARCHIVE">{% endblock %}
     {% endblock meta %}
@@ -44,19 +44,18 @@
                     </p>
                 {% endblock header %}
                 </header>
-                <!-- And others stuff -->
             {% block content %}
-                content
+
             {% endblock content %}
             </div>
-            <div id="sidebar" class="col-4">
+            <div id="sidebar" class="col-4 fixed-top-right">
             {% block sidebar %}
 
                 <div class="k2">
                     {% if request.user.is_authenticated %}
                         {{ request.user.username }}
                     {% else %}
-                     The Anonymous | <a href="/admin/login?next=/test/testing/"> Please login. </a>
+                     The Anonymous | <a href="/admin/login?next=/test/testing/"> Zaloguj się. </a>
                     {% endif %}
                     {# {{ request.user.username if request.user.is_authenticated else 'The Anonymous' }} #}
                 </div>

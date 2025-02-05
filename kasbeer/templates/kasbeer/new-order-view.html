@@ -1,5 +1,5 @@
 {% extends 'kasbeer/base-site.html' %}
-{% block title %} Ordering {% endblock %}
+{% block title %} Tworzenie zamówienia {% endblock %}
 
 {% block stylesheets %}
     {{ super() }}
@@ -9,31 +9,30 @@
 {% block sidebar %}
     {{ super() }}
     <div id="match-filtering" class="k3 card-tertiary">
-        <div class="card-header"> Search by ... </div>
+        <div class="card-header"> Wyszukaj przez ... </div>
         <div class="card-body">
             <form method="post">
                 <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
                     {{ form.as_div() }}
-                <button class="btn btn-primary" type="submit"> Search </button>
+                <button class="btn btn-primary" type="submit"> Szukaj </button>
             </form>
         </div>
     </div>
     <div id="other-actions" class="ky card-tertiary">
         <div class="card-header"> Inne akcje </div>
         <div class="card-body">
-            <div class="btn btn-secondary"> Pokaż wybrane </div>
+            <div class="btn btn-secondary"> Pokaz wybrane </div>
             <div class="btn btn-secondary"> Wybierz analizy </div>
-            <div class="btn btn-primary"> Wyślij </div>
+            <div class="btn btn-primary"> Wyslij </div>
         </div>
     </div>
 {% endblock sidebar %}
 
 {% block content %}
-    {{ super() }}
     {% for match in matches %}
-        {{ match }}
+    <div>
+        {{ match.home_score }}:{{ match.away_score }}
+        {{ match.home }} vs {{ match.away }}
+    </div>
     {% endfor %}
-    <script>
-
-    </script>
 {% endblock %}

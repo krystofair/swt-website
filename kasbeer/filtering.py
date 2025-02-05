@@ -2,15 +2,65 @@ from django import forms
 from django.forms import HiddenInput, Select
 from django.utils import choices
 
-from functools import partial
+from functools import partial, cached_property, lru_cache
 import logging
 
 import warehouse.views as wh
 
+logger = logging.getLogger(__name__)
+
 
 EMPTY_CHOICE = [("", "?")]
 
-MatchPromise = partial
+Promise = partial
+
+class DynamicChoiceField(forms.ChoiceField):
+
+  def __init__(self, *args, **kwargs):
+    super().__init__(*args, **kwargs)
+
+  def init(self, parent, ref, dataprovider):
+    #: Parent is form which this field belongs to
+    # self.parent = kwargs.pop('parent')
+    self._parent = parent
+    #: This is reference of value that choices depends
+    # self.field_ref = kwargs.pop('field_ref')
+    self._field_ref = ref  # self._conv_to_list(ref)
+    #: And dataprovider is function for getting new choices
+    # self.dataprovider = kwargs.pop('data_fun')
+    self._data_provider = dataprovider
+
+  # def _conv_to_list(self, value):
+  #   """Helper for convert value as list of parameters"""
+  #   try:
+  #     if (not isinstance(value, tuple)
+  #         and not isinstance(value, typing.MutableSequence)):
+  #       return [value]
+  #     return list(value)
+  #   except:
+  #     logger.warning(f"Cannot convert value {value} as list.")
+  #     raise
+
+  def _get_reference_val(self):
+    """Helper for exactly get value the choices are built on."""
+    logger.debug("Try get value(s) from field reference.")
+    return self._parent.data[self._field_ref]
+
+  @lru_cache(maxsize=40)
+  def _ch(self, reference_value):
+    """Helper to choices for could be beeing cached by dependency value."""
+    logger.debug("Reading choices from data provider.")
+    return self._data_provider(reference_value)
+
+  @property
+  def choices(self):
+    ref_vals = self._get_reference_val()
+    return self._ch(ref_val)
+
+  @choices.setter
+  def choices(self, value):
+    super().choices = value
+
 
 class FilterUtilMixin:
 
@@ -20,6 +70,8 @@ class FilterUtilMixin:
         And add it to context dictionary.
         Arguments:
           changes: result form `form`.has_changes, which return names of field
+        Returns:
+          Promise = partial for data which should be collected from API (warehouse).
     """
     ctx = dict()
     in_ = lambda x: x in changes
@@ -39,21 +91,26 @@ class FilterUtilMixin:
     #  to field name.
     if teamC:
       """ update team's games by part of text from team input (LIKE) """
-      ctx.update(matches = MatchPromise(wh.Matches.by_team, team))
-    elif countryC:
-      """ Update leagues from this country without updating games """
-      ctx.update(league = self._L())
-      ctx.update(country = self._C())
-    elif leagueC:
-      """ Update games from tournament and update seasons for tournament"""
-      ctx.update(matches = MatchPromise(wh.Matches.by_tournament, tournament))
-      ctx.update(season = self._S())
-      ctx.update(league = self._L())
-    elif seasonC:
-      """ Update games from specified season in selected tournament """
-      ctx.update(matches = MatchPromise(wh.Matches.by_season_of_tournament, (season, tournament)))
-      ctx.update(season = self._S())
-    return ctx
+      ctx.update(matches = Promise(wh.Matches.by_team, team))
+    else:
+      if countryC and leagueC:
+        ctx.update(matches=Promise(wh.Matches.by_tournament, tournament))
+        ctx.update(season=Promise(self._S, tournament))
+        ctx.update(league=Promise(self._L, country))
+      elif countryC:
+        """ Update leagues from this country without updating games """
+        ctx.update(league = Promise(self._L, country))
+        ctx.update(country = Promise(self._C))
+      elif leagueC:
+        """ Update games from tournament and update seasons for tournament"""
+        ctx.update(matches = Promise(wh.Matches.by_tournament, tournament))
+        ctx.update(season = Promise(self._S, tournament))
+        ctx.update(league = Promise(self._L, country))
+      elif seasonC:
+        """ Update games from specified season in selected tournament """
+        ctx.update(matches = Promise(wh.Matches.by_season_of_tournament, (season, tournament)))
+        ctx.update(season = Promise(self._S, tournament))
+      return ctx
 
 
   def _df(self, name):
@@ -62,22 +119,13 @@ class FilterUtilMixin:
   def _boundF(self, x):
     return self._df(x).get_bound_field(self, x)
 
-  def _ch(self, name):
-    match name:
-      case "country":
-        return self._C()
-      case "league":
-        return self._L()
-      case "season":
-        return self._S()
-
   def _L(self, country=None):
     """
         Helper method to obtain leagues by country.
         Take country from own's form, unless passed as arguments.
     """
     if not country:
-      country = self.data['country'] #  self._boundF('country').value()
+      country = self.data['country']
     return EMPTY_CHOICE + [(l, l.title()) for l in wh.Names.list_leagues(country)]
 
   def _C(self):
@@ -97,98 +145,103 @@ class FilterUtilMixin:
              wh.Names.list_seasons_for_tournament((league, country))]
     )
 
-  def _recreate_field(self, field, initial=None, choices=None):
+  def _recreate_field(self, field, new_choices=None):
     """
         Recreate field 'field' with new initial and choices.
         Initial is for again be able to observable change.
         Choices are simply new choices which will be rendered on website.
     """
     return field.__class__(
-      required=False,
-      show_hidden_initial=True,
-      initial=initial,
-      choices = choices
+      required=field.required,
+      show_hidden_initial=field.show_hidden_initial,
+      initial=field.initial,
+      choices=new_choices
     )
 
 
-class FilterFormFieldId:
-  """Those are identificators used in HTML template."""
-  Country = 'country-filter'
-  League = 'league-filter'
-  Season = 'season-filter'
+def filteringForm_factory():
+  filtering_form = type("FilteringForm", (FilterUtilMixin, forms.Form), {
+    'country': forms.ChoiceField(show_hidden_initial=True, choices=())
+  }, )
 
 class FilteringForm(FilterUtilMixin, forms.Form):
   team = forms.CharField(required=False)
-  country = forms.ChoiceField(show_hidden_initial=True,
-                              widget=Select(attrs={'id': FilterFormFieldId.Country}))
-  league = forms.ChoiceField(show_hidden_initial=True, required=False,
-                             widget=Select(attrs={'id': FilterFormFieldId.League}))
-  season = forms.ChoiceField(show_hidden_initial=True, required=False,
-                             widget=Select(attrs={'id': FilterFormFieldId.Season}))
-  matches_result_promise: MatchPromise = None
+  country = forms.ChoiceField(show_hidden_initial=True)
+  league = forms.ChoiceField(show_hidden_initial=True, required=False)
+  season = forms.ChoiceField(show_hidden_initial=True, required=False)
+  matches_result_promise: Promise = None
   # template_name_div = "kasbeer/filtering.html"
+
+  # def __new__(cls, request, *args, **kwargs):
+  #   super().__new__(cls, *args, **kwargs)
+  #   for key, value in cls.declared_fields.items():
+  #     print(key)
+
+  def __init__(self, request, *args, **kwargs):
+    logger.debug(f"{args=!r},\n\n {kwargs=!r}")
+    super().__init__(*args, **kwargs)
+    if not self.is_bound:
+      c = self.init_country(request.session)
+      l = self.init_league(c)
+      s = self.init_season(l, c)
+      self.initial = {
+        'country': c,
+        'league': l,
+        'season': s
+      }
+    else:
+      self.update()
 
   def search(self):
     """Return filtered matches"""
     if self.matches_result_promise:
       return self.matches_result_promise()
-    self.log.warning("Proxy for matches result not yet loaded.")
+    logger.warning("Proxy for matches result not yet loaded.")
     return []
 
   def update(self):
-    if self.has_changed():
-      updates = self.logic(self.changed_data)
-      for key, value in updates.items():
-        match key:
-          case 'league'|'season'|'country':
-            #: creating new fields
-            field = self._recreate_field(self._df(key), value, self._ch(key))
-            #: Updating line
-            self.__class__.declared_fields[key] = field
-          case 'matches':
-            self.matches_result_promise = value
+    # if self.has_changed():
+    updates = self.logic(self.changed_data)
+    initial_data = {}
+    for field_name, data_promise in updates.items():
+      match field_name:
+        case 'league'|'season'|'country':
+          #: creating new fields
+          field = self._recreate_field(self._df(field_name), data_promise())
+          #: Updating line
+          self.__class__.declared_fields[field_name] = field
+          #: save initial to init whole form.
+          initial_data.update({field_name: self._boundF(field_name).value()})
+        case 'matches':
+          self.matches_result_promise = data_promise
+    self.initial = initial_data
 
-  def __init__(self, *args, **kwargs):
-    self.log = logging.getLogger("FilteringForm")
-    data = args[0] if len(args) >= 1 else None
-    if not data and 'data' in kwargs:
-      data = kwargs.pop('data')
-    if not data:
-      c = self.init_country()
-      l = self.init_league(c)
-      s = self.init_season(l, c)
-      data = {
-        'country': c,
-        'league': l,
-        'season': s
-      }
-      super().__init__(data)
-    else:
-      super().__init__(*args, **kwargs)
-      self.update()
-
-  def init_country(self):
+  @lru_cache(maxsize=4)
+  def init_country(self, session):
     all_countries = wh.Names.list_countries()
     choices = [(c, c.title()) for c in all_countries]
     self._df('country').choices = choices
+    self._df('country').initial = all_countries[0]
     return all_countries[0]
 
   def init_league(self, country):
     try:
       leagues = self._L(country)
       self._df('league').choices = leagues
-      return leagues[0][0]
+      self._df('league').initial = leagues[0][0]
     except Exception as e:
-      self.log.exception(e)
-      self.log.warning("Not update league choices in filtering")
-    return ''
+      logger.exception(e)
+      logger.warning("Not update league choices in filtering")
+      return ''
+    return leagues[0][0]
 
   def init_season(self, league, country):
     try:
       seasons = self._S(league, country)
       self._df('season').choices = seasons
+      self._df('season').initial = seasons[0][0]
     except Exception as e:
-      self.log.exception(e)
-      self.log.warning("Not update season choices in filtering")
+      logger.exception(e)
+      logger.warning("Not update season choices in filtering")
       return ''
     return seasons[0][0]

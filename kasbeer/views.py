@@ -4,7 +4,7 @@ from django.shortcuts import render, reverse, loader
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from django.views.generic.base import TemplateView
-from django.http import JsonResponse, HttpResponseRedirect, HttpResponse
+from django.http import JsonResponse, HttpResponseRedirect, HttpResponse, HttpRequest
 from django import forms
 import orjson as jsonlib
 
@@ -49,8 +49,7 @@ class TestingForms(TemplateView):
 
   def get(self, request, *args, **kwargs):
     # self._prepare_url_(template_name)
-    response = super().get(request, *args, **kwargs)
-    form = FilteringForm()
+    form = FilteringForm(request)
     context = dict()
     context['form'] = form
     context |= self.get_context_data(**context)
@@ -65,13 +64,15 @@ class TestingForms(TemplateView):
   # def post(self, request, template_name, *args, **kwargs):
     # self._prepare_url_(template_name)
     # self.form = FilteringForm(request.POST)
-    form = FilteringForm(request.POST)
+    form = FilteringForm(request, request.POST)
     ctx = {  'view': self }
     if form.is_valid():
+      #: Find all matches from filters - call API
       matches = form.search()
       ctx |= {'form': form, 'matches': matches }
     else:
-      ctx |= {'form': FilteringForm()}
+      ctx |= {'errors': [{"country": "Wyszukaj jeszcze raz."}]}
+      ctx |= {'form': FilteringForm(request)}
     response = render(request, self.template_name, context=ctx,
                       using=self.template_engine)
     if response.status_code == 200:

@@ -1,10 +1,10 @@
 from django.shortcuts import render
 from django.apps import apps
-
-
 import sqlalchemy as sa
 # TODO: set explicit models from aleksander.
 from aleksander.dblayer import *
+
+import typing
 from collections import namedtuple
 import pandas as pd
 
@@ -14,6 +14,7 @@ log = logging.getLogger(__name__)
 
 # Create your views here.
 # This is views, but in database perspective :)
+
 
 #: reference to config of this application.
 wh = apps.get_app_config('warehouse')
@@ -53,7 +54,7 @@ class Matches(API):
   @staticmethod
   def by_team(team):
     """ listing all matches which team played"""
-    team = sa.or_(Match.home == team, Match.away == team)
+    team = sa.or_(Match.home.like(f"%{team}%"), Match.away.like(f"%{team}%"))
     query = sa.select(*Matches.SimpleMatch).where(team)
     return API._exe_query(query)
   
@@ -67,7 +68,7 @@ class Matches(API):
     return API._exe_query(q)
   
   @classmethod
-  def by_tournament(cls, tournament):
+  def by_tournament(cls, tournament: models.Tournament):
     """list matches by league + country (I named it as tournament)"""
     league, country = tournament
     q = sa.select(*cls.SimpleMatch).where(sa.and_(Match.league == league, Match.country == country))
