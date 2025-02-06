@@ -1,48 +1,56 @@
 from django import forms
+from django.forms import widgets
 from django.forms import HiddenInput, Select
 from django.utils import choices
 
 import functools
+import logging
 
 from .models import Match
+from . import widgets as kasbeer_widgets
 import warehouse.views as wh
 from .filtering import FilteringForm
 
+logger = logging.getLogger(__name__)
 
-class MatchSpecializedForm(forms.Form):
+class MatchInlineEntryForm(forms.Form):
   # template_engine = 'jinja2'
-  # class Meta:
-  #   model = Match
-  #   fields = ['checked', 'summary', 'weight', 'identifier']
-    # exclude = ['identifier']
-  __name__ = "MatchSpecializedForm"  # setting it is a hit.
-  template_name_div = "kasbeer/match-div-form.html"
-  checked = forms.BooleanField()
-  weight = forms.DecimalField()  # (default=1.0)
-  identifier = forms.CharField(max_length=32, widget=HiddenInput) #  max_length=32, default='', widget=HiddenInput)
-  summary = forms.CharField(max_length=128)
-  # @property
-  # def summary(self):
-  #   """Return summary - nice info about game to user."""
-  #   return "H 4 : 4 A"
-  # @summary.setter
-  # def summary(self, value):
-  #   """
-  #       Must be here something like that to update with initial data.
-  #       We have external source of data - warehouse app.
-  #       And from there data will fly to us as a bulk to not encounter
-  #       SELECTs one by one.
-  #   """
-  #   self._summary = value
+  # template_name_div = 'kasbeer/widgets/match-widget.html'
 
-  def clean(self):
+  def __new__(cls, *args, **kwargs):
     """
-        How to clean up data to be saved only this one,
-        which has `checked` field "true".
+        Arguments:
+          game: Match Object from WareHouse(Data DB).
     """
-    if not self.checked:
-      raise forms.ValidationError("Not checked to be saved in order")
-    return super().clean()
+    try:
+      game = kwargs.pop('initial')
+    except KeyError:
+      logger.error("Match not passed to create entry.")
+      raise
+    #: type(cls) is metaclass
+    new_class = type(cls).__new__(type(cls), cls.__name__,
+                          bases=(forms.Form, ),
+                          attrs={
+                            'match': kasbeer_widgets.MatchEntryField(game,
+                                                                     label="")
+                          })
+    return new_class(*args, **kwargs)
+
+  # def __init__(self, mo, *args, **kwargs):
+  #   """
+  #       Arguments:
+  #         mo: This is dict object based of SimpleMatch tuple
+  #           and model of Match from WareHouse (Aleksander).
+  #           So probably there has to be implemented any interface
+  #           to keep it here after all. For now it's as voice contract.
+  #   """
+  #   super().__init__(*args, **kwargs)
+  #   #: unpack as in order of SimpleMatch tuple
+  #   mid, hm, aw, hmscr, awscr = mo.values()
+  #   if hmscr != mo['home_score'] or mid != mo['match_id']:
+  #     raise ValueError("Getting values from match_object didn't keep order,"
+  #                      " TODO: reimplemented.")
+
 
   def save(self, commit=False):
     """
@@ -50,3 +58,26 @@ class MatchSpecializedForm(forms.Form):
         Because this object will be saved by "save_from_gui" method of order.
     """
     return super().save(commit)
+
+
+class MatchFormSet(forms.BaseFormSet, forms.Form):
+  can_delete = False
+  can_order = False
+  min_num = 0
+  max_num = 100
+  absolute_max = 100
+  """Even small number will be displayed on page at once,
+     So user cannot clicked at more that this number of games for sure."""
+  extra = 0
+  """Kasbeer do not rely on this parameters cause form has always initials."""
+  form = MatchInlineEntryForm
+  renderer = None
+
+  def get_context(self):
+    return super().get_context()
+
+  def __init__(self, games, *args, **kwargs):
+    super().__init__(initial=games, *args, **kwargs)
+
+  def save_new(self, form, commit=False):
+    return super().save_new(form, commit)

@@ -58,12 +58,12 @@ class OrderAdmin(admin.ModelAdmin):
           form: is whole form with inline jobs and matches.
           request: can check permissions, access to POST params etc.
     """
-    JobFactory = forms.inlineformset_factory(Order, Job, exclude=JobInline.exclude)
-    try:
-      MatchFactory = forms.inlineformset_factory(Order, Match, fields=MatchInline.fields)
-    except Exception as e:
-      logging.getLogger(__name__).warning(e)
-    jf = JobFactory()
-    import pdb; pdb.set_trace()
+    # JobFactory = forms.inlineformset_factory(Order, Job, exclude=JobInline.exclude)
+    # try:
+    #   MatchFactory = forms.inlineformset_factory(Order, Match, fields=MatchInline.fields)
+    # except Exception as e:
+    #   logging.getLogger(__name__).warning(e)
+    # jf = JobFactory()
+    # import pdb; pdb.set_trace()
     # obj.validate(raise_exception=True)
     super().save_model(request, obj, form, change)

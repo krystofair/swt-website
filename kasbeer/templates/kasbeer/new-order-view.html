@@ -11,28 +11,34 @@
     <div id="match-filtering" class="k3 card-tertiary">
         <div class="card-header"> Wyszukaj przez ... </div>
         <div class="card-body">
-            <form method="post">
-                <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+            <form method="get">
                     {{ form.as_div() }}
-                <button class="btn btn-primary" type="submit"> Szukaj </button>
+                <button class="btn btn-primary w-100 m-t-3" type="submit">
+                    Szukaj
+                </button>
             </form>
         </div>
     </div>
     <div id="other-actions" class="ky card-tertiary">
         <div class="card-header"> Inne akcje </div>
         <div class="card-body">
-            <div class="btn btn-secondary"> Pokaz wybrane </div>
-            <div class="btn btn-secondary"> Wybierz analizy </div>
-            <div class="btn btn-primary"> Wyslij </div>
+            <div class="btn btn-secondary w-100"> Pokaz wybrane </div>
+            <div class="btn btn-secondary w-100"> Wybierz analizy </div>
+            <div class="btn btn-secondary w-100"> Zatwierdz wybory </div>
+            <div class="btn btn-success w-100" onclick="send_order"> Wyslij
+            </div>
         </div>
     </div>
 {% endblock sidebar %}
 
 {% block content %}
-    {% for match in matches %}
-    <div>
-        {{ match.home_score }}:{{ match.away_score }}
-        {{ match.home }} vs {{ match.away }}
-    </div>
+    <form method="post">
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    {% for mform in matches %}
+        {{ mform.as_div() }}
     {% endfor %}
+    </form>
+{% endblock %}
+{% block javascripts %}
+    {{ super() }}
 {% endblock %}

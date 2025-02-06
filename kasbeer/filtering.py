@@ -76,10 +76,10 @@ class FilterUtilMixin:
     ctx = dict()
     in_ = lambda x: x in changes
     # data pull out
-    team = self.data['team']
-    league = self.data['league']
-    season = self.data['season']
-    country = self.data['country']
+    team = self.data.get('team', '')
+    league = self.data.get('league', '')
+    season = self.data.get('season', '')
+    country = self.data.get('country', '')
     tournament = (league, country)
     # conditions
     leagueC = in_('league')
@@ -104,13 +104,13 @@ class FilterUtilMixin:
       elif leagueC:
         """ Update games from tournament and update seasons for tournament"""
         ctx.update(matches = Promise(wh.Matches.by_tournament, tournament))
-        ctx.update(season = Promise(self._S, tournament))
+        ctx.update(season = Promise(self._S, *tournament))
         ctx.update(league = Promise(self._L, country))
       elif seasonC:
         """ Update games from specified season in selected tournament """
         ctx.update(matches = Promise(wh.Matches.by_season_of_tournament, (season, tournament)))
-        ctx.update(season = Promise(self._S, tournament))
-      return ctx
+        ctx.update(season = Promise(self._S, *tournament))
+    return ctx
 
 
   def _df(self, name):
@@ -158,12 +158,6 @@ class FilterUtilMixin:
       choices=new_choices
     )
 
-
-def filteringForm_factory():
-  filtering_form = type("FilteringForm", (FilterUtilMixin, forms.Form), {
-    'country': forms.ChoiceField(show_hidden_initial=True, choices=())
-  }, )
-
 class FilteringForm(FilterUtilMixin, forms.Form):
   team = forms.CharField(required=False)
   country = forms.ChoiceField(show_hidden_initial=True)
@@ -171,11 +165,6 @@ class FilteringForm(FilterUtilMixin, forms.Form):
   season = forms.ChoiceField(show_hidden_initial=True, required=False)
   matches_result_promise: Promise = None
   # template_name_div = "kasbeer/filtering.html"
-
-  # def __new__(cls, request, *args, **kwargs):
-  #   super().__new__(cls, *args, **kwargs)
-  #   for key, value in cls.declared_fields.items():
-  #     print(key)
 
   def __init__(self, request, *args, **kwargs):
     logger.debug(f"{args=!r},\n\n {kwargs=!r}")

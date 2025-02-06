@@ -43,6 +43,9 @@ class Order(models.Model):
     creat = self.created.isoformat()
     return f"Order({creat}) {compl}{d}"
 
+  def __repr__(self):
+    return (f"Order({self.id})")
+
   def append(self, value):
     match value:
       case Job():
@@ -70,14 +73,15 @@ class Order(models.Model):
       return False
     return True
 
-  def save_from_gui(self, **kwargs):
+  def save_from_gui(self):
+    #: TODO: This method should be rather in some kind of Form.
     #: before in view logic, created analyses and matches object should be added to this aggregate.
     self.validate(raise_exception=True)
     # if self.validate():
       # raise ValueError("Should be handled by showing modal to client. With info.")
     #: Actual saving
     #: First save order
-    super(Order, self).save(**kwargs)
+    self.save()
     #: Saving related objects with setting parent.
     for j in self.jobs:
       j.order = self
@@ -110,6 +114,9 @@ class Match(models.Model):
   identifier = models.CharField(max_length=32)
   weight = models.DecimalField(max_digits=5, decimal_places=2)
   order = models.ForeignKey(Order, on_delete=models.CASCADE)
+
+  def __repr__(self):
+    return f"kasbeer.Match({self.identifier}, {self.weight})"
 
 
 class Analysis(models.Model):

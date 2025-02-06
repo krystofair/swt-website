@@ -48,6 +48,7 @@ class Matches(API):
   @staticmethod
   def by_ids(mids):
     """ Simple retrieve match or matches (in Simple format) from DB by its identifier."""
+    log.debug(mids)
     query = sa.select(*Matches.SimpleMatch).where(Match.match_id.in_(mids))
     return API._exe_query(query)
       
@@ -71,6 +72,7 @@ class Matches(API):
   def by_tournament(cls, tournament: models.Tournament):
     """list matches by league + country (I named it as tournament)"""
     league, country = tournament
+    log.debug(f"{league=}, {country=}, {tournament=}")
     q = sa.select(*cls.SimpleMatch).where(sa.and_(Match.league == league, Match.country == country))
     return API._exe_query(q)
   
@@ -99,6 +101,7 @@ class Names(API):
   @staticmethod
   def list_leagues(country):
     """listing leagues by country, without country leagues are not listed."""
+    log.debug(f"list_leagues({country=})")
     query = sa.select(Match.league.distinct()).where(Match.country == country)
     try:
       with sa.orm.Session(wh.dbmgr.eng) as session:
@@ -121,8 +124,11 @@ class Names(API):
   @staticmethod
   def list_seasons_for_tournament(tournament: models.Tournament|tuple[str, str]):
     league, country = tournament
+    log.debug(f"list_seasons_for_tournament({league=}, {country=},"
+              f" {tournament=})")
     """seasons only per league"""
-    query = sa.select(Match.season.distinct()).where(sa.and_(Match.league == league, Match.country == country))
+    query = sa.select(Match.season.distinct()).where(
+      sa.and_(Match.league == league, Match.country == country))
     try:
       with sa.orm.Session(wh.dbmgr.eng) as session:
         return list(map(str, session.scalars(query)))

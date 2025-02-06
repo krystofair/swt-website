@@ -14,26 +14,18 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.urls import path, include
+from django.urls import path, include, re_path
 from django.contrib import admin
 from rest_framework import routers, serializers, viewsets
 from kasbeer import views
 
-class A(views.TemplateView):
-    template_engine = 'jinja2'
-    title = "Tworzenie orderu :O"
-
-    def get(self, request, template_name, *args, **kwargs):
-        template_name = template_name.rstrip('.html')
-        self.template_name = f"/kasbeer/{template_name}.html"
-        return super().get(request, *args, **kwargs)
 
 urlpatterns = [
     # path('', include('dashboard.urls')),
     path('admin/', admin.site.urls),
     path('orders/create/', views.OrderCreation.as_view()),
     path('leagues/<str:country>/', views.leagues),
-    path('test/kasbeer/<str:template_name>', A.as_view())
+    re_path(r'^test/', views.TestingForms.as_view(), name='testing_things')
     #   path('orders/filters/', views.FilterView.as_view()),
     #   path('orders/select/', views.ChosenMatchesView.as_view()),
     #   path('orders/save/', views.OrderNewView.as_view()),  # method POST

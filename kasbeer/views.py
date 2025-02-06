@@ -10,7 +10,7 @@ import orjson as jsonlib
 
 #: API for names .
 import warehouse.views as wh
-from kasbeer.forms import MatchSpecializedForm, FilteringForm
+from kasbeer.forms import MatchInlineEntryForm, FilteringForm, MatchFormSet
 
 class OrderCreation(TemplateView):
   template_name = "kasbeer/new-order-view.html"
@@ -34,7 +34,7 @@ class OrderCreation(TemplateView):
     form = FilteringForm(request.POST)
     return super().get(request, *args, **kwargs)
 
-@method_decorator(never_cache, name='dispatch')
+# @method_decorator(never_cache, name='dispatch')
 class TestingForms(TemplateView):
   template_engine = 'jinja2'
   title = "Tworzenie orderu :O"
@@ -48,39 +48,21 @@ class TestingForms(TemplateView):
     return super().get_context_data(**kwargs)
 
   def get(self, request, *args, **kwargs):
-    # self._prepare_url_(template_name)
-    form = FilteringForm(request)
-    context = dict()
-    context['form'] = form
-    context |= self.get_context_data(**context)
-    # matches = formset_f
-    # if 'context' not in kwargs:
-    #   kwargs['context'] = dict()
-    # kwargs['context'] |=
-    return render(request, template_name=self.template_name,
-                      using=self.template_engine, context = context)
-
-  def post(self, request, *args, **kwargs):
-  # def post(self, request, template_name, *args, **kwargs):
-    # self._prepare_url_(template_name)
-    # self.form = FilteringForm(request.POST)
-    form = FilteringForm(request, request.POST)
-    ctx = {  'view': self }
+    ctx = {}
+    if request.GET.dict():
+      form = FilteringForm(request, request.GET)
+    else:
+      form = FilteringForm(request)
+    ctx['form'] = form
     if form.is_valid():
       #: Find all matches from filters - call API
       matches = form.search()
-      ctx |= {'form': form, 'matches': matches }
-    else:
-      ctx |= {'errors': [{"country": "Wyszukaj jeszcze raz."}]}
-      ctx |= {'form': FilteringForm(request)}
-    response = render(request, self.template_name, context=ctx,
-                      using=self.template_engine)
-    if response.status_code == 200:
-      return response
-    else:
-      ctx |= { 'is_modal': True, 'error_message': "hohoho idiota" }
-      return response
-
+      mform = MatchFormSet(games=matches)
+      ctx |= {'matches': mform}
+    ctx |= self.get_context_data(**ctx)
+    resp = render(request, template_name=self.template_name,
+                  using=self.template_engine, context=ctx)
+    return resp
 
 def leagues(request, country, **kwargs):
   ls = wh.Names.list_leagues(country.lower())
