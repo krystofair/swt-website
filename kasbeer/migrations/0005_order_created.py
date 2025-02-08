@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name='order',
-            name='created',
+            name='created_at',
             field=models.DateTimeField(auto_created=True, auto_now=True, verbose_name='creation datetime'),
         ),
     ]

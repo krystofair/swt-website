@@ -1,6 +1,7 @@
 #: Third party imports
 from django.db import models
 from django.contrib.auth.models import User
+from django.contrib.sessions.models import Session
 import pandas
 import attrs
 from rest_framework import routers, serializers, viewsets
@@ -24,44 +25,109 @@ from .tasks import collect_tasks, prepare_choices_tasks, ANALYSES_MODULE
 
 # Create your models here.
 
+logger = logging.getLogger(__name__)
+
+# class OrderSessionRepo(models.QuerySet):
+#   """
+#       Manage orders in session context.
+#   """
+#   # _store = {}   # session_id => order
+#   def __init__(self, *args, **kwargs):
+#     self._db = "orders_repository"
+#   def create(self, **kwargs):
+#     Order.objects.create(
+#       draft=True,
+#       complete=False,
+#
+#     )
+#
+#
+#   def get_or_create(self, defaults=None, **kwargs):
+#     super().get_or_create(defaults, **kwargs)
+#
+# class SessionOrder(models.Model):
+#   order = models.OneToOneField(Order, models.CASCADE)
+#   session = models.OneToOneField(Session, models.CASCADE, primary_key=True)
+#   objects = OrderSessionRepo.as_manager()  # default_manager
 
 class Order(models.Model):
   draft = models.BooleanField(default=False)
+  """User can save order as undone yet."""
   complete = models.BooleanField(default=False)
-  created = models.DateTimeField(verbose_name="creation datetime", auto_created=True, auto_now=True)
-  # user = models.ForeignKey(User, on_delete=models.CASCADE)
+  created_at = models.DateTimeField(verbose_name="creation datetime",
+                                    auto_now=True)
+  user = models.ForeignKey(User, on_delete=models.CASCADE)
+  """Every order belongs to some user after saved."""
+  # object = models.Manager()  # default manager
 
   def __init__(self, *args, **kwargs):
     super().__init__(*args, **kwargs)
-    self.jobs = list()
-    self.matches = list()
+    self._jobs = list()
+    self._matches = list()
     self.log = logging.getLogger("orders")
+
+  @property
+  def matches(self):
+    if not self._matches:
+      try:
+        self._matches = self.match_set.all()
+      except ValueError:
+        return []
+      except Exception as e:
+        logger.exception(e)
+    return self._matches
+
+  @matches.setter
+  def matches(self, value):
+    order.append(value)
+
+  @property
+  def jobs(self):
+    if not self._jobs:
+      try:
+        self._jobs = self.job_set.all()
+      except ValueError:
+        return []
+      except Exception as e:
+        logger.exception(e)
+    return self._jobs
+
+  @jobs.setter
+  def jobs(self, value):
+    self.append(value)
 
   def __str__(self):
     compl = '✅️' if self.complete else '🔜️'
     d = ' DRAFT' if self.draft else ''
-    creat = self.created.isoformat()
+    creat = self.created_at.isoformat()
     return f"Order({creat}) {compl}{d}"
 
   def __repr__(self):
     return (f"Order({self.id})")
 
   def append(self, value):
+    """
+        Add object to order with type it can served.
+        Raises TypeError when appending object isn't served by order.
+    """
     match value:
       case Job():
-        self.jobs.append(value)
+        self._jobs.append(value)
       case Match():
-        self.matches.append(value)
+        self._matches.append(value)
       case _:
         raise TypeError("You cannot add object with other type than 'Match' or 'Job'.")
 
   def remove(self, value):
+    """
+        Opposite to append. See `Order::append`.
+    """
     try:
       match value:
         case Job():
-          self.jobs.remove(value)
+          self._jobs.remove(value)
         case Match():
-          self.matches.remove(value)
+          self._matches.remove(value)
     except ValueError:
       self.log.warning("Try of removing item not on list."
                        "Not important, but something is bad designed.")
@@ -73,15 +139,15 @@ class Order(models.Model):
       return False
     return True
 
-  def save_from_gui(self):
+  def save(self):
     #: TODO: This method should be rather in some kind of Form.
-    #: before in view logic, created analyses and matches object should be added to this aggregate.
+    #: before in view logic, created_at analyses and matches object should be added to this aggregate.
     self.validate(raise_exception=True)
     # if self.validate():
       # raise ValueError("Should be handled by showing modal to client. With info.")
     #: Actual saving
     #: First save order
-    self.save()
+    super().save()
     #: Saving related objects with setting parent.
     for j in self.jobs:
       j.order = self
@@ -124,8 +190,8 @@ class Analysis(models.Model):
   class Meta:
     verbose_name_plural = "analyses"
     permissions = (
-      ("view", "can_view_analysis"),
-      ("run", "can_run_analysis")
+      ("view", "Can view analysis in WEBGUI"),
+      ("run", "Can calculate analysis")
     )
 
   name = models.CharField(primary_key=True, max_length=128)
@@ -160,7 +226,9 @@ class Analysis(models.Model):
 
 
 class Job(models.Model):
-  """Analysis in order"""
+  """
+      Analysis in order, is this should be as a `proxy model`? #XXX
+  """
   order = models.ForeignKey(Order, on_delete=models.CASCADE)
   analysis_name = models.CharField(max_length=128, choices=prepare_choices_tasks(collect_tasks()))
   result = models.JSONField(null=True)
@@ -183,3 +251,11 @@ class Job(models.Model):
         self.df = None
     super(Job, self).save(**kwargs)
 
+class CustomOrderManager(models.Manager):
+  """
+      Responsible for resulting objects only for specific user.
+      This automatically prevent from visible order from another non-auth user.
+      Then we change basis manager for objects to this one, and add another for
+      admin. The question is it will work or how to configured it futher in admin panel?
+      I cannot answer that now, cause too young in Django I am. TODO. :)
+  """
