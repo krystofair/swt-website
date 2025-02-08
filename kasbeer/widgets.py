@@ -29,6 +29,7 @@ class MatchEntryField(forms.MultiValueField):
     super().__init__(
       initial=Match(identifier=mid, weight=1.0),
       fields=fields,
+      label="",
       require_all_fields=False,
       widget=MatchEntryWidget(widgets=[f.widget for f in fields]),
       **kwargs

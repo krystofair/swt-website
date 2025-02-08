@@ -14,8 +14,7 @@ from .filtering import FilteringForm
 logger = logging.getLogger(__name__)
 
 class MatchInlineEntryForm(forms.Form):
-  # template_engine = 'jinja2'
-  # template_name_div = 'kasbeer/widgets/match-widget.html'
+  template_engine = 'jinja2'
 
   def __new__(cls, *args, **kwargs):
     """
@@ -31,8 +30,7 @@ class MatchInlineEntryForm(forms.Form):
     new_class = type(cls).__new__(type(cls), cls.__name__,
                           bases=(forms.Form, ),
                           attrs={
-                            'match': kasbeer_widgets.MatchEntryField(game,
-                                                                     label="")
+                            'match': kasbeer_widgets.MatchEntryField(game)
                           })
     return new_class(*args, **kwargs)
 
