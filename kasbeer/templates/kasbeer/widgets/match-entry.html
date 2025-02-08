@@ -5,6 +5,7 @@
                name="{{ widget.name }}"{% if widget.value != None %} value="{{ widget.value }}"{% endif %}>
         <span class="form-check-x"></span>
         <span class="form-check-sign"></span>
+        <input type="hidden" value="{{ widget.teams}}, {{widget.score}}">
         {{ widget.score }} {{ widget.teams }}
     </label>
 </div>

@@ -15,6 +15,17 @@ function add_games() {
     console.log('submitted for adding games to order')
 }
 
+function change_game_callback(event) {
+    let self = event.target
+    console.debug("Event change received from:" + self)
+    let form_total_forms = document.getElementById('match_list_chosen_count')
+    if (self.checked) {
+        form_total_forms.value = parseInt(form_total_forms.value) + 1;
+    } else {
+        form_total_forms.value = parseInt(form_total_forms.value) - 1;
+    }
+}
+
 function modal_with_analyses() {
     
 }

@@ -116,7 +116,7 @@ class Order(models.Model):
       case Match():
         self._matches.append(value)
       case _:
-        raise TypeError("You cannot add object with other type than 'Match' or 'Job'.")
+        logger.warning("Tried of append {} of type {}".format(value, type(value)))
 
   def remove(self, value):
     """

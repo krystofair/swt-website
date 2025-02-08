@@ -1,8 +1,10 @@
 from django import forms
 from django.contrib.admin.utils import label_for_field
+from django.core.exceptions import ValidationError
 from django.forms import widgets
 
 import logging
+import decimal
 
 from .models import Match
 
@@ -11,23 +13,29 @@ logger = logging.getLogger(__name__)
 
 class MatchEntryField(forms.MultiValueField):
   """Single entry at listing list."""
+  DEFAULT_WEIGHT = 1.02
 
-  def __init__(self, mo, stats=None, **kwargs):
-    #: unpack as in order of SimpleMatch tuple
-    mid, hm, aw, hmscr, awscr = mo.values()
-    if hmscr != mo['home_score'] or mid != mo['match_id']:
-      raise ValueError("Getting values from match_object didn't keep order,"
-                       " TODO: reimplemented.")
+  def __init__(self, game=None, stats=None, **kwargs):
+    if game:
+      #: unpack as in order of SimpleMatch tuple
+      mid, hm, aw, hmscr, awscr = game.values()
+      if hmscr != game['home_score'] or mid != game['match_id']:
+        raise ValueError("Getting values from match_object didn't keep order,"
+                         " TODO: reimplemented.")
+      INITIAL = Match(identifier=mid, weight=MatchEntryField.DEFAULT_WEIGHT)
+
     fields = (
       forms.BooleanField(required=False,
-                         widget=MatchEntryCheckbox(self.summary(mo))),
-      forms.CharField(required=False, widget=widgets.HiddenInput()),
-      forms.DecimalField(max_value=2.0, min_value=-1.5, step_size=0.03,
-                         required=False, widget=WeightRangeWidget())
+                         widget=MatchEntryCheckbox(self.summary(game))),
+      forms.CharField(required=True, widget=widgets.HiddenInput()),
+      forms.DecimalField(max_value=decimal.Decimal(2.0),
+                         min_value=decimal.Decimal(-1.5),
+                         step_size=decimal.Decimal(0.03),
+                         required=True, widget=WeightRangeWidget())
     )
 
     super().__init__(
-      initial=Match(identifier=mid, weight=1.0),
+      initial=INITIAL if game else None,
       fields=fields,
       label="",
       require_all_fields=False,
@@ -37,19 +45,24 @@ class MatchEntryField(forms.MultiValueField):
 
   def summary(self, game, /):
     """Creates label for checkbox."""
+    if game is None:
+      return "-:- - vs -"
     return "{score} {teams}".format(**{
       'score': "{}:{}".format(game['home_score'], game['away_score']),
       'teams': "{} vs {}".format(game['home'], game['away'])
     })
 
+  def clean(self, value):
+    return self.compress(value)
+
   def compress(self, data_list):
+    """Get identifier and weight of match. """
     logger.debug(f"compress({data_list})")
     ident = data_list[1]
     weight = data_list[2]
     return Match(identifier=ident, weight=weight)
 
 class MatchEntryWidget(widgets.MultiWidget):
-  #template_name = "kasbeer/widgets/match-entry.html"
   use_fieldset = False
 
   def decompress(self, value):

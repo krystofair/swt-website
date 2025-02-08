@@ -33,7 +33,7 @@ class OrderCreation(TemplateView):
   def get_context_data(self, **kwargs):
     return super().get_context_data(**kwargs)
 
-  def get(self, request, action, *args, **kwargs):
+  def get(self, request, *args, **kwargs):
     ctx = {}
     if request.GET.dict():
       form = FilteringForm(request, request.GET)
@@ -60,15 +60,15 @@ class OrderCreation(TemplateView):
       ctx.update(form=FilteringForm(request))
       return render(request, template_name=self.template_name,
                     using=self.template_engine, context=ctx)
-    except ValueError:
+    except ValueError as e:
+      logger.exception(e)
       return HttpResponse(b"Przetwarzanie zlecenia sie nie powiodlo przykro mi")
 
   def get_order_by_session(self, request):
     try:
       order = self._orders[request.session.session_key]
     except KeyError:  # order jeszcze nie istnieje
-      order = models.Order(draft=False, user=request.user)
-      logger.info(f"Order created at {order.created_at} for user {request.user}")
+      order = models.Order(draft=False)
     self._orders[request.session.session_key] = order
     return self._orders[request.session.session_key]
 
@@ -76,21 +76,26 @@ class OrderCreation(TemplateView):
     #: Pobierz mecze z formularza po zatwierdzeniu
     order = self.get_order_by_session(request)
     formset = MatchFormSet(request.POST)
-    for match_form in formset:
-      logger.debug(match_form)
-      if match_form.is_valid():
-        order.append(match_form)
-    kwargs.update(matches=formset)
+    if formset.is_valid():
+      for match_form in formset:
+        m = match_form.cleaned_data['match']
+        order.append(m)
+        logger.info(f"add match {m!r} to order")
+      kwargs.update(matches=formset)
     return kwargs
 
   def _commit_order_action(self, request, **kwargs):
     order = self.get_order_by_session(request)
-    job = models.Job(analysis_name="Analiza rzutów rożnych 1")
+    job = models.Job(analysis_name=('analyse_corners_line_auto',
+                                    "Analiza rzutów rożnych 1"))
     order.append(job)
     #: This try is for saving order as draft if something goes wrong
     #: Then raise (not yet defined) exception to inform user.
     # try:
+    order.user = request.user
     order.save()
+    logger.info(f"Order created at {order.created_at} for user {request.user}")
+    del self._orders[request.session.session_key]
     # except ValueError as e:
     #   try:
     #     order.save_as_draft()

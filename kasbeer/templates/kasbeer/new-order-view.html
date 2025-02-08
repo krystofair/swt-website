@@ -37,6 +37,8 @@
 {% block content %}
     <form name="match_list" method="post">
         <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+        <input id="match_list_chosen_count" type="hidden" name="form-TOTAL_FORMS" value="0">
+        <input type="hidden" name="form-INITIAL_FORMS" value="0">
         {% for mform in matches %}
             {{ mform.as_div() }}
         {% endfor %}
