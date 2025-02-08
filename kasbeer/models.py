@@ -142,7 +142,8 @@ class Order(models.Model):
   def save(self):
     #: TODO: This method should be rather in some kind of Form.
     #: before in view logic, created_at analyses and matches object should be added to this aggregate.
-    self.validate(raise_exception=True)
+    if not self.draft:
+      self.validate(raise_exception=True)
     # if self.validate():
       # raise ValueError("Should be handled by showing modal to client. With info.")
     #: Actual saving

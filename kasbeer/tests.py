@@ -4,6 +4,7 @@ from . import models, services, signals
 
 class Testing(TestCase):
   def setUp(self):
+    self.user = models.User.objects.get(pk=1)  # AnonymousUser
     pass
   
   def test_analysis(self):
@@ -12,13 +13,13 @@ class Testing(TestCase):
     analysis = models.Analysis(task_func = "test_task")
     analysis.save()
     self.assertEqual(analysis.name, "Testowa analiza")
-    #: raise when uknown task, this cannot be created, because of choices in task_func field.
+    #: raise when uknown task, this cannot be created_at, because of choices in task_func field.
     with self.assertRaises(ValueError):
       wrong_analysis = models.Analysis(task_func = "unknown task")
       wrong_analysis.save()
   
   def test_process_order_creation(self):
-    order = models.Order()  # creating order as normal (no draft)
+    order = models.Order(user=self.user)  # creating order as normal (no draft)
     self.assertFalse(order.complete)
     #: Cannot save in this state.
     with self.assertRaises(ValueError):
@@ -61,3 +62,7 @@ class Testing(TestCase):
     self.assertEqual(df.iloc[0,1], 2)
     self.assertEqual(df.loc[1, 'c'], 7)      
 
+class Forms(TestCase):
+  def test_analyses_choices_form(self):
+    from kasbeer import forms
+    form = forms.AnalysesForm()
