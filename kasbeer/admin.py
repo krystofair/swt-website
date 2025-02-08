@@ -47,8 +47,9 @@ class AnalysisAdmin(guardAdmin.GuardedModelAdmin):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-  list_display = [ 'created', 'complete', 'draft', 'id',]
+  list_display = [ 'created_at', 'user', 'complete', 'draft', 'id',]
   inlines = [JobInline, MatchInline]
+  list_filter = ['user', 'created_at', 'complete']
 
   def save_model(self, request, obj, form, change):
     """
