@@ -104,6 +104,13 @@ WSGI_APPLICATION = 'tutu.wsgi.application'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
+    'orders_repository': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'ord_repo.sqlite3',
+        'OPTIONS': {
+            "timeout": 20
+        }
+    },
     'sqlite': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
@@ -118,7 +125,6 @@ DATABASES = {
         'PORT': '43211',
         'USER': 'postgres',
         'PASSWORD': '+ob_Dz+yM;Zl2Uj.W1G5',
-
     },
     # 'default': {
     #     'ENGINE': 'django.db.backends.mysql',
@@ -178,4 +184,4 @@ STATIC_URL = 'static/'
 
 LOGIN_REDIRECT_URL = '/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
+ANALYSIS_SINK_PATH = '/d/analityk/abuilda/abuilda/orders'

@@ -6,8 +6,10 @@ from django.utils.text import slugify
 import pandas as pd
 
 import importlib
+from pathlib import Path
 
 import warehouse.views as wh
+from tutu import settings
 
 
 ANALYSES_MODULE = 'kasbeer.tasks'
@@ -53,6 +55,17 @@ def set_name(friendly_name):
     return f
   return wrapper
 
+#%% Temporary some utils to save analysis into file.
+#%%
+
+def save_result():
+  """
+    NIe w tym miejscu. :) Wynik analizy czyli wynik z poniższych funkcji
+    jest zapisywany w Engine. Skąd następowało przetwarzanie i mamy dostępny order.
+  """
+  def wrapper(f):
+    bytes_data = json.dumps(dataframe.to_json()).decode('utf-8')
+    analysis = Analysis.objects.get(name=f.__analysis_name__)
 
 
 @set_name("Test dodawania analizy")
@@ -74,9 +87,14 @@ def analyse_corners_line_auto(matches):
       Wagi mają znaczenie że przykładowo na 10 meczów 5 jest over linii 3.5, ale tych 5 meczów jest wagowo słabe,
       więc inna wyższa linia może być tylko niewiele oddalona od 3.5 co oznacza że warto zagrać tę wyższą.
   """
+  from datetime import datetime
   #: pobieranie danych z api
-  frame = wh.Stats.stats(['corner-kicks'], match_ids)
-  Matches = wh.Matches.by_ids(match_ids)
+  frame = wh.Stats.stats(['corner-kicks'], matches)
+  Matches = wh.Matches.by_ids(matches)
+  dt = str(datetime.now().isoformat())
+  path_to_save_me = Path.joinpath(Path(settings.ANALYSIS_SINK_PATH),Path(dt),
+                                  Path('analyse_corners_line_auto.json'))
+  frame.to_json(path_to_save_me)
   return frame
 
 @set_name("Korelacja posiadania piłki do wyniku meczu")
