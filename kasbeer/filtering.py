@@ -1,3 +1,8 @@
+"""
+    Module for serving functionality about listing matches by specific
+    criterion.
+"""
+
 from django import forms
 from django.forms import HiddenInput, Select
 from django.utils import choices
@@ -13,6 +18,11 @@ logger = logging.getLogger(__name__)
 EMPTY_CHOICE = [("", "?")]
 
 Promise = partial
+"""
+    Needed abstraction renamed from partial to better describe what it is doing.
+    This indeed delay queries to database for specific data. It was created_at for
+    be able to run logic query composition, etc and after then queries database.
+"""
 
 class DynamicChoiceField(forms.ChoiceField):
 

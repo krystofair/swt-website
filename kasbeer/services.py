@@ -31,7 +31,7 @@ class Engine:
     self.log = logging.getLogger(f"{self.__module__}.{self.__class__.__name__}")
 
   def enqueue(self, order):
-    """Function to enqueuing orders, used by signal dispatcher where new_order was created."""
+    """Function to enqueuing orders, used by signal dispatcher where new_order was created_at."""
     try:
       #: Don't process drafts.
       if order.draft:
