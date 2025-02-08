@@ -1,38 +1,105 @@
+# django imports
 from django.forms import ModelChoiceField
 from django.forms.models import ModelChoiceIterator
-from django.shortcuts import render, reverse, loader
+from django.shortcuts import render, reverse, loader, redirect
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from django.views.generic.base import TemplateView
 from django.http import JsonResponse, HttpResponseRedirect, HttpResponse, HttpRequest
 from django import forms
+
+# other third-party
 import orjson as jsonlib
 
+# built-ins
+import logging
+
+# project's imports
 #: API for names .
 import warehouse.views as wh
 from kasbeer.forms import MatchInlineEntryForm, FilteringForm, MatchFormSet
+from kasbeer import models
+
+
+logger = logging.getLogger(__name__)
 
 class OrderCreation(TemplateView):
   template_name = "kasbeer/new-order-view.html"
   template_engine = 'jinja2'
   title = "Order Creation"
+  _orders = dict()
   # form = FilteringForm()
 
   def get_context_data(self, **kwargs):
-    context = super().get_context_data(**kwargs)
-    context["countries"] = wh.Names.list_countries()
-    lbc = dict()
-    for c in context['countries']:
-      lbc.update({c: wh.Names.list_leagues(c)})
-    context['leagues_by_countries'] = str(lbc)
-    return context
+    return super().get_context_data(**kwargs)
 
-  def get(self, request, *args, **kwargs):
-    return super().get(request, *args, **kwargs)
+  def get(self, request, action, *args, **kwargs):
+    ctx = {}
+    if request.GET.dict():
+      form = FilteringForm(request, request.GET)
+    else:
+      form = FilteringForm(request)
+    ctx['form'] = form
+    if form.is_valid():
+      #: Find all matches from filters - call API
+      matches = form.search()
+      mform = MatchFormSet(games=matches)
+      ctx |= {'matches': mform}
+    ctx |= self.get_context_data(**ctx)
+    resp = render(request, template_name=self.template_name,
+                  using=self.template_engine, context=ctx)
+    return resp
 
-  def post(self, request, *args, **kwargs):
-    form = FilteringForm(request.POST)
-    return super().get(request, *args, **kwargs)
+  def post(self, request, action, *args, **kwargs):
+    ctx = {}
+    try:
+      match action:
+        case 'games': ctx |= self._add_matches_action(request)
+        case 'accept': ctx |= self._commit_order_action(request)
+      ctx |= super().get_context_data()
+      ctx.update(form=FilteringForm(request))
+      return render(request, template_name=self.template_name,
+                    using=self.template_engine, context=ctx)
+    except ValueError:
+      return HttpResponse(b"Przetwarzanie zlecenia sie nie powiodlo przykro mi")
+
+  def get_order_by_session(self, request):
+    try:
+      order = self._orders[request.session.session_key]
+    except KeyError:  # order jeszcze nie istnieje
+      order = models.Order(draft=False, user=request.user)
+      logger.info(f"Order created at {order.created_at} for user {request.user}")
+    self._orders[request.session.session_key] = order
+    return self._orders[request.session.session_key]
+
+  def _add_matches_action(self, request, **kwargs):
+    #: Pobierz mecze z formularza po zatwierdzeniu
+    order = self.get_order_by_session(request)
+    formset = MatchFormSet(request.POST)
+    for match_form in formset:
+      logger.debug(match_form)
+      if match_form.is_valid():
+        order.append(match_form)
+    kwargs.update(matches=formset)
+    return kwargs
+
+  def _commit_order_action(self, request, **kwargs):
+    order = self.get_order_by_session(request)
+    job = models.Job(analysis_name="Analiza rzutów rożnych 1")
+    order.append(job)
+    #: This try is for saving order as draft if something goes wrong
+    #: Then raise (not yet defined) exception to inform user.
+    # try:
+    order.save()
+    # except ValueError as e:
+    #   try:
+    #     order.save_as_draft()
+    #     del self._orders[request.session.session_key]
+    #     raise
+    #   except:
+    #     raise e from None
+    return kwargs
+
 
 # @method_decorator(never_cache, name='dispatch')
 class TestingForms(TemplateView):
