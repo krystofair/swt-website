@@ -1,13 +1,13 @@
 from django.dispatch import receiver
 import pandas
-
-import queue
-import threading
-import logging
 try:
   import orjson as jsonlib
 except ModuleNotFoundError:
   import json as jsonlib
+
+import queue
+import threading
+import logging
 
 from . import models, signals
 
@@ -27,8 +27,8 @@ class Engine:
   """Orders Processing Service"""
   def __init__(self):
     self.orders_que = queue.Queue()
-    self.orders_processing_thread = threading.Thread(target=self.__orders_processing, daemon=True)
     self.log = logging.getLogger(f"{self.__module__}.{self.__class__.__name__}")
+    self._ord_processing_thread_ref = None
 
   def enqueue(self, order):
     """Function to enqueuing orders, used by signal dispatcher where new_order was created_at."""
@@ -37,8 +37,11 @@ class Engine:
       if order.draft:
         return
       self.orders_que.put(order)
-      if not self.orders_processing_thread.is_alive():
-        self.orders_processing_thread.start()
+      self.log.info("New order on queue: {order}".format(order=order))
+      if not self._ord_processing_thread_ref or not self._ord_processing_thread_ref.is_alive():
+        self._ord_processing_thread_ref = threading.Thread(target=self.__orders_processing(), daemon=True)
+        self._ord_processing_thread_ref.start()
+        self.log.info("Thread of processing orders started")
     except KeyError:
       # never raised.
       self.log.error(f"Did not enqueue order, because there is no order. Receive those: {kwargs=}")
@@ -46,13 +49,13 @@ class Engine:
   def __orders_processing(self):
     """Processing orders one by one, by single thread until queue will be empty."""
     TIMEOUT = 120.0  # in seconds
-    process_order_thread = threading.Thread(target=self.__process_order)
     self.log.debug("orders processing started")
     try:
       while not self.orders_que.empty():
-        process_order_thread.start()
-        self.log.debug("order thread started")
-        process_order_thread.join(timeout=TIMEOUT)  # two minute is enough for single order?
+        thread = threading.Thread(target=self.__process_order)
+        thread.start()
+        self.log.debug("Next order start processing.")
+        thread.join(timeout=TIMEOUT)  # two minute is enough for single order?
         # PROPOSAL: maybe wait some time for probability of taken new order in this time,
         #           so this wont quit from this thread.
     except TimeoutError:
@@ -63,14 +66,14 @@ class Engine:
     results = 0
     #: get order from queue
     order = self.orders_que.get()
-    self.log.debug("PROCESS SINGLE ORDER STARTED")
-    self.log.debug(f"{order.job_set.all()=}")
-    
-    for job in order.job_set.all():
+    self.log.debug("Processing order! {!r}".format(order))
+    jobs = order.job_set.all()
+    self.log.debug(f"All jobs for that order: {jobs=!r}")
+    for job in jobs:
       #: search reference analysis by name
       analysis = job.analysis()
+      self.log.debug(f"Found analysis! {analysis=!r}")
       try:
-        self.log.debug(f"{order=}, {analysis=}")
         self.log.debug(models.Analysis.objects.all())
         #: WARNING! If this can be run by specific user? Where the user object coming from?  - from order see orders.models
         task = analysis.task()
@@ -89,7 +92,5 @@ class Engine:
         # TODO: notify Admin.
         r = jsonlib.dumps(dict(error=str(e)))
     #: TODO: results =/= len(order.analyses) should be passed to signal?
-    #signals.order_complete.send(order)
-    order.complete = True
-    order.save()
-    self.log.debug("PROCESS SINGLE ORDER ENDED")
+    order.set_complete()
+    self.log.info("Processing order completed. {}".format(order))

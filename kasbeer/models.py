@@ -139,7 +139,11 @@ class Order(models.Model):
       return False
     return True
 
-  def save(self):
+  def set_complete(self):
+    self.complete = True
+    super().save(update_fields=['complete'])
+
+  def save(self, **kwargs):
     #: TODO: This method should be rather in some kind of Form.
     #: before in view logic, created_at analyses and matches object should be added to this aggregate.
     if not self.draft:
@@ -148,7 +152,7 @@ class Order(models.Model):
       # raise ValueError("Should be handled by showing modal to client. With info.")
     #: Actual saving
     #: First save order
-    super().save()
+    super().save(**kwargs)
     #: Saving related objects with setting parent.
     for j in self.jobs:
       j.order = self
@@ -231,7 +235,7 @@ class Job(models.Model):
       Analysis in order, is this should be as a `proxy model`? #XXX
   """
   order = models.ForeignKey(Order, on_delete=models.CASCADE)
-  analysis_name = models.CharField(max_length=128, choices=prepare_choices_tasks(collect_tasks()))
+  analysis_name = models.CharField(max_length=128, choices=[(t['name'], t['name']) for t in collect_tasks()])
   result = models.JSONField(null=True)
   #: There is better method for doing this - converting field, solution for short time.
   df = None
@@ -251,6 +255,9 @@ class Job(models.Model):
         self.result = self.df.to_json()
         self.df = None
     super(Job, self).save(**kwargs)
+
+  def __repr__(self):
+    return "<Job({}) = {}>".format(self.analysis_name, self.result or "...")
 
 class CustomOrderManager(models.Manager):
   """
