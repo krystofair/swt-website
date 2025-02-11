@@ -86,8 +86,7 @@ class OrderCreation(TemplateView):
 
   def _commit_order_action(self, request, **kwargs):
     order = self.get_order_by_session(request)
-    job = models.Job(analysis_name=('analyse_corners_line_auto',
-                                    "Analiza rzutów rożnych 1"))
+    job = models.Job(analysis_name="Analiza rzutów rożnych 1")
     order.append(job)
     #: This try is for saving order as draft if something goes wrong
     #: Then raise (not yet defined) exception to inform user.
