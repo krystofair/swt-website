@@ -48,13 +48,15 @@ class MatchEntryField(forms.MultiValueField):
     """Creates label for checkbox."""
     if game is None:
       return "-:- - vs - - at -"
-    return "{startdatetime} | {teams} {score}".format(**{
+    league = game.get('league', '')
+    return "{startdatetime} | {teams} {score}{league}".format(**{
       'score': "{}:{}".format(game['home_score'], game['away_score']),
       'teams': "{} vs {}".format(game['home'], game['away']),
       'startdatetime': format(
         game.get('when', datetime(1998, 4, 13)),
         "%d-%m-%Y at %H:%M"
-      )
+      ),
+      'league': f" | {league}" if league else ''
     })
 
   def clean(self, value):

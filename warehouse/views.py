@@ -45,54 +45,49 @@ class Matches(API):
   #: aliases for results
   SimpleMatch = (Match.match_id, Match.home, Match.away, Match.home_score,
                  Match.away_score, Match.when)
-  # LeagueMatch = (*SimpleMatch, Match.league)
-  # TODO: Add various of sets to collect like this, but it require refactor
-  #       methods to be bound with instance where set self.collect_set = ...
-  
-  @staticmethod
-  def by_ids(mids):
+  LeagueMatch = (*SimpleMatch, Match.league)
+
+  def __init__(self, display_set=None):
+    self.display_set = display_set or Matches.SimpleMatch
+
+  def by_ids(self, mids):
     """ Simple retrieve match or matches (in Simple format) from DB by its identifier."""
     log.debug(mids)
-    query = sa.select(*Matches.SimpleMatch).where(Match.match_id.in_(mids))
+    query = sa.select(*self.display_set).where(Match.match_id.in_(mids))
     return API._exe_query(query)
-      
-  @staticmethod
-  def by_team(team):
+
+  def by_team(self, team):
     """ listing all matches which team played"""
     team = sa.or_(Match.home.like(f"%{team}%"), Match.away.like(f"%{team}%"))
-    query = sa.select(*Matches.SimpleMatch).where(team)
+    query = sa.select(*self.display_set).where(team)
     return API._exe_query(query)
-  
-  @classmethod
-  def by_team_winner(cls, team):
+
+  def by_team_winner(self, team):
     #: where conditions
     home_winner = sa.and_(Match.home == team, Match.home_score > Match.away_score)
     away_winner = sa.and_(Match.away == team, Match.away_score > Match.home_score)
     #: query
-    q = sa.select(*cls.SimpleMatch).where(sa.or_(home_winner, away_winner))
+    q = sa.select(*self.display_set).where(sa.or_(home_winner, away_winner))
     return API._exe_query(q)
-  
-  @classmethod
-  def by_tournament(cls, tournament: models.Tournament):
+
+  def by_tournament(self, tournament: models.Tournament):
     """list matches by league + country (I named it as tournament)"""
     league, country = tournament
     log.debug(f"{league=}, {country=}, {tournament=}")
-    q = sa.select(*cls.SimpleMatch).where(sa.and_(Match.league == league, Match.country == country))
+    q = sa.select(*self.display_set).where(sa.and_(Match.league == league, Match.country == country))
     return API._exe_query(q)
-  
-  @classmethod
-  def by_season_of_tournament(cls, season, tournament):
+
+  def by_season_of_tournament(self, season, tournament):
     """name explain everything"""
     return []
-  
-  @classmethod
-  def by_team_in_tournament(cls, team, tournament):
+
+  def by_team_in_tournament(self, team, tournament):
     league, country = tournament
     #: conditions
     team = sa.or_(Match.home == team, Match.away == team)
     league_and_country = sa.and_(Match.league == league, Match.country == country)
     team_and_tournament = sa.and_(team, league_and_country)
-    q = sa.select(*cls.SimpleMatch).where(team_and_tournament)
+    q = sa.select(*self.display_set).where(team_and_tournament)
     return API._exe_query(q)
   
 
