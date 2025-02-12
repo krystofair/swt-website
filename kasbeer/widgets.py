@@ -5,6 +5,7 @@ from django.forms import widgets
 
 import logging
 import decimal
+from datetime import datetime
 
 from .models import Match
 
@@ -18,7 +19,7 @@ class MatchEntryField(forms.MultiValueField):
   def __init__(self, game=None, stats=None, **kwargs):
     if game:
       #: unpack as in order of SimpleMatch tuple
-      mid, hm, aw, hmscr, awscr = game.values()
+      mid, hm, aw, hmscr, awscr, *_ = game.values()
       if hmscr != game['home_score'] or mid != game['match_id']:
         raise ValueError("Getting values from match_object didn't keep order,"
                          " TODO: reimplemented.")
@@ -46,17 +47,21 @@ class MatchEntryField(forms.MultiValueField):
   def summary(self, game, /):
     """Creates label for checkbox."""
     if game is None:
-      return "-:- - vs -"
-    return "{score} {teams}".format(**{
+      return "-:- - vs - - at -"
+    return "{startdatetime} | {teams} {score}".format(**{
       'score': "{}:{}".format(game['home_score'], game['away_score']),
-      'teams': "{} vs {}".format(game['home'], game['away'])
+      'teams': "{} vs {}".format(game['home'], game['away']),
+      'startdatetime': format(
+        game.get('when', datetime(1998, 4, 13)),
+        "%d-%m-%Y at %H:%M"
+      )
     })
 
   def clean(self, value):
     return self.compress(value)
 
   def compress(self, data_list):
-    """Get identifier and weight of match. """
+    """Get identifier and weight of match."""
     logger.debug(f"compress({data_list})")
     ident = data_list[1]
     weight = data_list[2]
