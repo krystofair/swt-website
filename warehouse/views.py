@@ -43,7 +43,11 @@ class Matches(API):
   """API of returning match listing"""
   
   #: aliases for results
-  SimpleMatch = (Match.match_id, Match.home, Match.away, Match.home_score, Match.away_score)
+  SimpleMatch = (Match.match_id, Match.home, Match.away, Match.home_score,
+                 Match.away_score, Match.when)
+  # LeagueMatch = (*SimpleMatch, Match.league)
+  # TODO: Add various of sets to collect like this, but it require refactor
+  #       methods to be bound with instance where set self.collect_set = ...
   
   @staticmethod
   def by_ids(mids):
@@ -145,27 +149,32 @@ class Stats(API):
   BasicView = (Statistic.name, Statistic.home, Statistic.away)
   
   @classmethod
-  def stats(cls, names, matches: list[str] | list[Match]):
+  def stats(cls, names, matches):
     """
-        Returning pandas dataframe~s~ for passed statistic names.
-        ~So query is for all names, but then this grouping it for list by names.~
+        Returning pandas dataframe for passed statistic names.
         Arguments:
-          names - names of statistics to collect,
-          matches - object of matches with attribute match_id or simple list of ids in string.
+          names: names of statistics to collect,
+          matches: matches as kasbeer.Match or string of ids
     """
+    errors = []  # this is a list to validation data output. This will be upgraded in future.
+    # I just point it out here for a moment.
     ids = []
     try:
-      ids = [m.id for m in matches]
+      ids = [m.identifier for m in matches]
     except AttributeError:
       ids = matches
-    if not ids:
-      raise ValueError("Cannot get statistics, because of condition")
     query = (sa.select(*cls.BasicView, Match.match_id).where(Statistic.name.in_(names))
              .join(Match).where(Match.match_id.in_(ids)))
     result_t_mappings = API._exe_query(query)
+    if len(result_t_mappings) < len(ids):
+      results_ids = [r.match_id for r in result_t_mappings]
+      lack_of_set = set(ids).difference(set(results_ids))
+      errors.append("There is no stats for {} matches: {}"
+        .format( len(ids) - len(result_t_mappings), ','.join(lack_of_set))
+      )
     single_frame = pd.DataFrame(result_t_mappings)
     log.debug(single_frame)
     #single_frame.groupby(['name'])
-    return single_frame
+    return single_frame, errors
 
   
