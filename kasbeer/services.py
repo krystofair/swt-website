@@ -1,3 +1,5 @@
+import os
+
 from django.dispatch import receiver
 import pandas
 try:
@@ -10,6 +12,7 @@ import threading
 import logging
 
 from . import models, signals
+from tutu.settings import ANALYSIS_SINK_PATH
 
 
 class MatchService:
@@ -80,6 +83,20 @@ class Engine:
         #task.delay() # XXX: this will be in power when use celery.
         df: "pandas.DataFrame" = task(list(order.match_set.all()))
         results += 1
+        try:
+          full_path = ANALYSIS_SINK_PATH.format(
+            timestamp=format(order.created_at, "%Y-%m-%d_%H%M"),
+            name=analysis.task_func
+          )
+          dir_path = full_path.rstrip(f"/{analysis.task_func}.csv")
+          try:
+            os.mkdir(dir_path)
+          except OSError:
+            pass # dir exists.
+          df.to_csv(full_path, index=False)
+        except Exception as e:
+          self.log.error("Saving results analysis to file failed.")
+          self.log.exception(e)
         job.df = df
         self.log.debug(job.df)
         job.save()

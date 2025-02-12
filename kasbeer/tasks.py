@@ -6,13 +6,18 @@ from django.utils.text import slugify
 import pandas as pd
 
 import importlib
-from pathlib import Path
+import logging
+from datetime import datetime
 
 import warehouse.views as wh
 from tutu import settings
 
 
 ANALYSES_MODULE = 'kasbeer.tasks'
+
+logging.basicConfig()
+log = logging.getLogger("AnalysisTasks")
+
 
 #def analysis(name, **options):
   #def _from_fun(func):
@@ -45,7 +50,7 @@ def collect_tasks() -> list[dict]:
 
 def prepare_choices_tasks(tasks: list[dict]):
   yield from ((t['task_func'], t['name']) for t in tasks)
-  
+
 def set_name(friendly_name):
   """
   Setting name for analysis model by decorator it is for be visiable nicely when Admin will add permission.
@@ -55,17 +60,20 @@ def set_name(friendly_name):
     return f
   return wrapper
 
+
 #%% Temporary some utils to save analysis into file.
 #%%
 
-def save_result():
-  """
-    NIe w tym miejscu. :) Wynik analizy czyli wynik z poniższych funkcji
-    jest zapisywany w Engine. Skąd następowało przetwarzanie i mamy dostępny order.
-  """
-  def wrapper(f):
-    bytes_data = json.dumps(dataframe.to_json()).decode('utf-8')
-    analysis = Analysis.objects.get(name=f.__analysis_name__)
+# def save_result_to_file(f, path=""):
+#   logging.basicConfig(filename="results_of_analyses.csv", format="%(analysis_name)s,%(generation_time)s,%(json_result)s")
+#   log = logging.getLogger(f.__analysis_name__)
+#   log
+#   def wrapper(*args, **kwargs):
+#     generation_time = datetime.now().isoformat(sep='@', timespec="milliseconds")
+#     result = f(*args, **kwargs)
+#
+#     result.to_json()
+#   return wrapper
 
 
 @set_name("Test dodawania analizy")
@@ -87,15 +95,32 @@ def analyse_corners_line_auto(matches):
       Wagi mają znaczenie że przykładowo na 10 meczów 5 jest over linii 3.5, ale tych 5 meczów jest wagowo słabe,
       więc inna wyższa linia może być tylko niewiele oddalona od 3.5 co oznacza że warto zagrać tę wyższą.
   """
-  from datetime import datetime
-  #: pobieranie danych z api
-  frame = wh.Stats.stats(['corner-kicks'], matches)
-  Matches = wh.Matches.by_ids(matches)
-  dt = str(datetime.now().isoformat())
-  path_to_save_me = Path.joinpath(Path(settings.ANALYSIS_SINK_PATH),Path(dt),
-                                  Path('analyse_corners_line_auto.json'))
-  frame.to_json(path_to_save_me)
-  return frame
+  try:
+    #: List of needed stasts
+    list_of_stats = ['corner-kicks'] # , 'yellow-cards', 'shots-on-target', 'shots-off-target']
+    #: API call for statistics
+    stats_df, errors = wh.Stats.stats(list_of_stats, matches)
+    delta = count_stats_to_matches(stats_df, matches)
+    log.debug("DELTA IS {}".format(delta))
+    # if delta/len(matches) > 0.45:
+    #   raise ValueError("TooSmallDataset(delta={})".format(delta))
+    # log errors, cause in analysis there is no place for errors yet.
+    now = format(datetime.now(), "[%d-%m-%Y @ %H:%M:%S.%Z]")
+    for error in errors:
+      with open(f"/d/analityk/abuilda/abuilda/logs/error.log", 'a',
+                encoding='utf-8') as error_log:
+        print(f"{now} {error}", file=error_log)
+      # log.warning(error)
+    #: Build frame from chosen matches
+    matches_df = pd.DataFrame([{'match_id': m.identifier,'weight': m.weight}
+                               for m in matches])
+    #: merge to one frame by compare match_id
+    pframe = pd.merge(stats_df, matches_df, on='match_id')
+    # pframe.reset_index(drop=True).drop([], inplace=True, axis=1)
+    return pframe
+  except Exception as e:
+    log.exception(e)
+    return pd.DataFrame()
 
 @set_name("Korelacja posiadania piłki do wyniku meczu")
 def correlation_bp2result(matches):
@@ -123,3 +148,6 @@ def oblicz_korelacje_statystyk_kazdy_z_kazdym(matches):
   """
   pass
 
+
+def count_stats_to_matches(dataframe, matches):
+  return len(matches) - len(dataframe.iloc[0, :])
