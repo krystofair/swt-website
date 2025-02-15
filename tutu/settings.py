@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'guardian',
     'warehouse',
+    'm2',
     'kasbeer'
 ]
 
