@@ -83,6 +83,7 @@ class FilterUtilMixin:
         Returns:
           Promise = partial for data which should be collected from API (warehouse).
     """
+    matches_api = wh.Matches()
     ctx = dict()
     in_ = lambda x: x in changes
     # data pull out
@@ -101,11 +102,11 @@ class FilterUtilMixin:
     #  to field name.
     if teamC:
       """ update team's games by part of text from team input (LIKE) """
-      ctx.update(matches = Promise(wh.Matches.by_team, team))
+      ctx.update(matches = Promise(matches_api.by_team, team))
     else:
       if countryC and leagueC:
-        ctx.update(matches=Promise(wh.Matches.by_tournament, tournament))
-        ctx.update(season=Promise(self._S, tournament))
+        ctx.update(matches=Promise(matches_api.by_tournament, tournament))
+        ctx.update(season=Promise(self._S, *tournament))
         ctx.update(league=Promise(self._L, country))
       elif countryC:
         """ Update leagues from this country without updating games """
@@ -113,12 +114,12 @@ class FilterUtilMixin:
         ctx.update(country = Promise(self._C))
       elif leagueC:
         """ Update games from tournament and update seasons for tournament"""
-        ctx.update(matches = Promise(wh.Matches.by_tournament, tournament))
+        ctx.update(matches = Promise(matches_api.by_tournament, tournament))
         ctx.update(season = Promise(self._S, *tournament))
         ctx.update(league = Promise(self._L, country))
       elif seasonC:
         """ Update games from specified season in selected tournament """
-        ctx.update(matches = Promise(wh.Matches.by_season_of_tournament, (season, tournament)))
+        ctx.update(matches = Promise(matches_api.by_season_of_tournament, (season, tournament)))
         ctx.update(season = Promise(self._S, *tournament))
     return ctx
 
