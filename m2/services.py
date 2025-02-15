@@ -1,5 +1,3 @@
-import os
-
 from django.dispatch import receiver
 import pandas
 try:
@@ -7,23 +5,13 @@ try:
 except ModuleNotFoundError:
   import json as jsonlib
 
+import os
 import queue
 import threading
 import logging
 
-from . import models, signals
+from kasbeer import models
 from tutu.settings import ANALYSIS_SINK_PATH
-
-
-class MatchService:
-  """
-      Application Service to transform Orders app matches to Analyses app.
-      And others utility tools with them.
-  """
-
-  @staticmethod
-  def get_ids(matches):
-    return [m.match_id for m in matches]
 
 
 class Engine:
@@ -93,7 +81,11 @@ class Engine:
             os.mkdir(dir_path)
           except OSError:
             pass # dir exists.
-          df.to_csv(full_path, index=False)
+          if isinstance(df, dict):
+            for key, dataframe in df.items():
+              dataframe.to_csv(f"{dir_path}/{analysis.task_func}_{key}.csv")
+          else:
+            df.to_csv(full_path, index=False)
         except Exception as e:
           self.log.error("Saving results analysis to file failed.")
           self.log.exception(e)
@@ -101,13 +93,11 @@ class Engine:
         self.log.debug(job.df)
         job.save()
         self.log.debug(f"{job.result=}")
-        #signals.analysis_complete.send(analysis.copy())
       except models.Analysis.DoesNotExist:
         self.log.warning("User choose analysis which wasn't add by admin.")
       except Exception as e:
         self.log.exception(e)
         # TODO: notify Admin.
         r = jsonlib.dumps(dict(error=str(e)))
-    #: TODO: results =/= len(order.analyses) should be passed to signal?
     order.set_complete()
     self.log.info("Processing order completed. {}".format(order))

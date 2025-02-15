@@ -19,8 +19,8 @@ import uuid
 from datetime import datetime
 
 #: project imports
-from . import signals
-from .tasks import collect_tasks, prepare_choices_tasks, ANALYSES_MODULE
+from m2.tasks import collect_tasks, prepare_choices_tasks, ANALYSES_MODULE
+from m2 import views as m2_api
 
 
 # Create your models here.
@@ -161,10 +161,11 @@ class Order(models.Model):
       m.order = self
       m.save()
     if not self.draft:
-      #: send this order to receivers of new_order signal.
-      #: theoretically it enough to use post_save signal, but draft will be sent then too.
-      #: And this is should not be in another logic.
-      signals.new_order.send(self)
+      #: Use M2 app for plan processing order.
+      try:
+        m2_api.plan(self)
+      except TimeoutError as e:
+        self.log.error("Order saved, but {}".format(str(e)))
 
   def save_as_draft(self):
     """For action to save order for later as a draft, cause user don't see checkbox with [x]draft."""

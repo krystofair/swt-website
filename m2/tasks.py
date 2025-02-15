@@ -4,6 +4,7 @@
 from django.contrib import admin
 from django.utils.text import slugify
 import pandas as pd
+import numpy as np
 
 import importlib
 import logging
@@ -13,7 +14,7 @@ import warehouse.views as wh
 from tutu import settings
 
 
-ANALYSES_MODULE = 'kasbeer.tasks'
+ANALYSES_MODULE = 'm2.tasks'
 
 logging.basicConfig()
 log = logging.getLogger("AnalysisTasks")
@@ -87,6 +88,61 @@ def test_task(matches):
   return df
 
 
+def common_to_stat_analyses(stats_list, matches):
+  #: List of needed stasts
+  list_of_stats = stats_list
+  #: API call for statistics
+  stats_df, errors = wh.Stats.stats(list_of_stats, matches)
+  now = format(datetime.now(), "[%d-%m-%Y @ %H:%M:%S.%Z]")
+  for error in errors:
+    with open(f"/d/analityk/abuilda/abuilda/logs/error.log", 'a',
+              encoding='utf-8') as error_log:
+      print(f"{now} {error}", file=error_log)
+    # log.warning(error)
+  #: Build frame from chosen matches
+  matches_df = pd.DataFrame([{'match_id': m.identifier, 'weight': m.weight}
+                             for m in matches])
+  #: merge to one frame by compare match_id, with how='outer' to has indicator
+  #  well worked
+  pframe = pd.merge(matches_df, stats_df, on='match_id', copy=False,
+                    indicator=True, how='outer')
+  delta = (pframe._merge != 'both').sum()
+  log.debug('DELTA IS {}'.format(delta))
+  # if delta/len(matches) > 0.45:
+  #   raise ValueError("TooSmallDataset(delta={})".format(delta))
+  # log errors, cause in analysis there is no place for errors yet.
+  #: filtered out if not both.
+  return (
+    pframe[pframe._merge == 'both']
+    .drop(['_merge'], axis=1)  # drop indicator.
+    .reset_index(drop=True)
+  )
+
+
+def lines_analysis(pframe):
+  # %% badanie linii z ramki pframe
+  lines = np.arange(0.5, 25.5, 1)
+  #: Prepare new dataframe for this research
+  over = pd.DataFrame()
+  #: Index of this dataframe is all columns to calculate from data
+  over.index = pframe.columns
+  nom = len(pframe.index)  # number of matches = length data index
+  under = over.copy()
+  for line in lines:
+    over[str(line)] = (pframe > line).sum()
+    under[str(line)] = nom - over[str(line)]
+  # clear non important lines
+  over = over.loc[:, (over != 0).any(axis=0)].loc[:, (over < 1).any(axis=0)]
+  under = under.loc[:, (under != 1).any(axis=0)].loc[:, (under > 0).any(axis=0)]
+  return {
+    'over': over * 100,
+    'under': under * 100
+  }
+
+@set_name("Zbierz różne statystyki")
+def correlate_(matches):
+  pass
+
 @set_name("Analiza rzutów rożnych 1")
 def analyse_corners_line_auto(matches):
   """
@@ -96,28 +152,10 @@ def analyse_corners_line_auto(matches):
       więc inna wyższa linia może być tylko niewiele oddalona od 3.5 co oznacza że warto zagrać tę wyższą.
   """
   try:
-    #: List of needed stasts
-    list_of_stats = ['corner-kicks'] # , 'yellow-cards', 'shots-on-target', 'shots-off-target']
-    #: API call for statistics
-    stats_df, errors = wh.Stats.stats(list_of_stats, matches)
-    delta = count_stats_to_matches(stats_df, matches)
-    log.debug("DELTA IS {}".format(delta))
-    # if delta/len(matches) > 0.45:
-    #   raise ValueError("TooSmallDataset(delta={})".format(delta))
-    # log errors, cause in analysis there is no place for errors yet.
-    now = format(datetime.now(), "[%d-%m-%Y @ %H:%M:%S.%Z]")
-    for error in errors:
-      with open(f"/d/analityk/abuilda/abuilda/logs/error.log", 'a',
-                encoding='utf-8') as error_log:
-        print(f"{now} {error}", file=error_log)
-      # log.warning(error)
-    #: Build frame from chosen matches
-    matches_df = pd.DataFrame([{'match_id': m.identifier,'weight': m.weight}
-                               for m in matches])
-    #: merge to one frame by compare match_id
-    pframe = pd.merge(stats_df, matches_df, on='match_id')
-    # pframe.reset_index(drop=True).drop([], inplace=True, axis=1)
+    # , 'yellow-cards', 'shots-on-target', 'shots-off-target']
+    pframe = common_to_stat_analyses(['corner-kicks'], matches)
     return pframe
+
   except Exception as e:
     log.exception(e)
     return pd.DataFrame()
@@ -148,6 +186,3 @@ def oblicz_korelacje_statystyk_kazdy_z_kazdym(matches):
   """
   pass
 
-
-def count_stats_to_matches(dataframe, matches):
-  return len(matches) - len(dataframe.iloc[0, :])
