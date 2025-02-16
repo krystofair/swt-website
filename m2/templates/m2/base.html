@@ -1,0 +1,91 @@
+{% extends 'kasbeer/base-site.html' %}
+
+{% block meta %}
+{{ super() }}
+<script src="{{ static('apexcharts-bundle/dist/apexcharts.js') }}"></script>
+{% endblock %}
+
+{% block title %} Przeglądanie wyników {% endblock %}
+
+
+{% block stylesheets %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ static('apexcharts-bundle/dist/apexcharts.css') }}">
+    <link rel="stylesheet" href="{{ static('m2/custom.css') }}">
+{% endblock %}
+
+{% block content %}
+    {# TODO: Paging here, it would be nice. Paging for not load all data at once,
+                look below - maybe something like that. #}
+    {# {% for option in charts[page:page+1] %} #}
+    {# {% for chart_name, option in plots.items() %} #}
+    <div id="chart"></div>
+
+    {# {% endfor %} #}
+    {# <script>charts.at(chart_nr).render()</script> #}
+    
+{% endblock %}
+
+{% block sidebar %}
+    {{ super() }}
+    <div id="data-x" class="k3 card-tertiary">
+        <div class="card-header">Wybor wykresu</div>
+        <div class="card-body">
+            {% for chart_name in plots.keys() %}
+            <div class="form-check-radio">
+                <div class="form-check">
+                    <label class="form-check-label w-75">
+                        <span class="fs-6">{{ chart_name }}</span>
+                    <input type="radio" name="chart" value="{{ chart_name }}">
+                    <span class="form-check-sign"></span>
+                    </label>
+                </div>
+            </div>
+            {# <div class="form-check-radio">
+                <div class="form-check">
+                    <label class="form-check-label w-75">
+                        <span class="fs-6">druga</span>
+                    <input type="radio" name="data-x">
+                    <span class="form-check-sign"></span>
+                    </label>
+                </div>
+            </div> #}
+            {% endfor %}
+        </div>
+    </div>
+    <div id="other-actions" class="ky card-tertiary">
+        <div class="card-header"> Inne akcje </div>
+        <div class="card-body">
+            <div class="btn btn-secondary w-100">Poprzednia analiza</div>
+            <div class="btn btn-secondary w-100">Następna analiza</div>
+            <a href="/o/listing">
+                <div class="btn btn-secondary w-100">Wroc do listy zamowien</div>
+            </a>
+
+        </div>
+    </div>
+{% endblock sidebar %}
+
+{% block javascripts %}
+{{ super() }}
+<script>
+        var charts = {
+            {% for chart_name, option in plots.items() %}
+                "{{ chart_name }}": new ApexCharts(
+                    document.querySelector("#chart"),
+                    {{ option | tojson }}
+                ),
+            {% endfor %}
+        };
+        $(document).ready(function() {
+            $('input[type=radio][name="chart"]').change(function() {
+                if (chosen != undefined || chosen != null) {
+                    charts[chosen].destroy();
+                }
+                var chosen = $(this).val();
+                charts[chosen].render();
+            });
+        });
+</script>
+
+{% endblock %}
