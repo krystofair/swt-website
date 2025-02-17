@@ -109,9 +109,12 @@ def common_to_stat_analyses(stats_list, matches):
                     indicator=True, how='outer')
   delta = (pframe._merge != 'both').sum()
   log.debug('DELTA IS {}'.format(delta))
-  # if delta/len(matches) > 0.45:
-  #   raise ValueError("TooSmallDataset(delta={})".format(delta))
-  # log errors, cause in analysis there is no place for errors yet.
+  lack_rate = delta/len(matches)
+  if lack_rate > 0.25:
+    raise ValueError(
+      "Cannot calculate, number of lacking stats is more than 25%.({})"
+      .format(lack_rate)
+    )
   #: filtered out if not both.
   return (
     pframe[pframe._merge == 'both']
@@ -155,7 +158,7 @@ def analyse_corners_line_auto(matches):
   except Exception as e:
     # TODO: Raise error to be saved in errors (upframe).
     log.exception(e)
-    return pd.DataFrame()
+    raise
 
 
 @set_name("Rzuty rożne describe dla Boxa")
@@ -169,7 +172,7 @@ def corners_box_describe_totals(matches):
     return describe_df
   except Exception as e:
     log.exception(e)
-    return pd.DataFrame()
+    raise
 
 @set_name("Analiza rzutów rożnych 2.0")
 def analyse_corners_2(matches):
@@ -208,7 +211,7 @@ def analyse_corners_2(matches):
     return ou
   except Exception as e:
     log.exception(e)
-    return pd.DataFrame()
+    raise
 
 @set_name("Korelacja posiadania piłki do wyniku meczu")
 def correlation_bp2result(matches):
