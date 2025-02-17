@@ -7,6 +7,7 @@ from django.views.decorators.cache import never_cache
 from django.views.generic.base import TemplateView, View
 from django.http import JsonResponse, HttpResponseRedirect, HttpResponse, HttpRequest
 from django import forms
+from django import http
 
 # other third-party
 import orjson as jsonlib
@@ -24,13 +25,38 @@ from m2.views import visualize
 
 logger = logging.getLogger(__name__)
 
+session_page = {}
 
 def order_result_view(request, order_id, *args, **kwargs) -> View:
   order = models.Order.objects.get(id=order_id)
-  job = order.jobs[0]
-  view = visualize(job, **kwargs)
-  return view(request)
+  page = session_page.get(request.session.session_key, 0)
+  last_part = request.path.split('/')[-1]
+  match last_part:
+    case "next":
+      page += 1
+    case "prev":
+      page -= 1
+  try:
+    job = order.jobs[page]
+    session_page.update({
+      request.session.session_key: page
+    })
+    view = visualize(job, **kwargs)
+    return view(request)
+  except (ValueError, IndexError):
+    raise http.Http404("There is no more results.")
 
+
+
+@never_cache
+def list_orders(request, **kwargs):
+  orders = models.Order.objects.filter(user=request.user)
+  return render(request, "kasbeer/order_list.html", {
+    "orders": orders
+  }, using='jinja2')
+
+def index(request, **kwargs):
+  return render(request, template_name="kasbeer/index.html", using='jinja2')
 
 class OrderCreation(TemplateView):
   template_name = "kasbeer/new-order-view.html"
@@ -95,8 +121,11 @@ class OrderCreation(TemplateView):
 
   def _commit_order_action(self, request, **kwargs):
     order = self.get_order_by_session(request)
-    job = models.Job(analysis_name="Analiza rzutów rożnych 1")
-    order.append(job)
+    job1 = models.Job(analysis_name="Analiza rzutów rożnych 1")
+    job2 = models.Job(analysis_name="Analiza rzutów rożnych 2.0")
+    # job3 = models.Job(analysis_name="Rzuty rożne describe dla Boxa")
+    order.append(job1)
+    order.append(job2)
     #: This try is for saving order as draft if something goes wrong
     #: Then raise (not yet defined) exception to inform user.
     # try:

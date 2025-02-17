@@ -1,0 +1,19 @@
+{% extends 'kasbeer/base-site.html' %}
+
+{% block title %} Lista zamowien {% endblock %}
+
+{% block header %}
+    <div class="view-title w-100 card-header">
+        <a href="/">SWT</a>
+        <b> twoje badania </b>
+    </div>
+{% endblock header %}
+
+
+{% block content %}
+    <ul>
+    {% for order in orders %}
+        <li><a href="/results/{{ order.id }}"> {{ order }} </a></li>
+    {% endfor %}
+    </ul>
+{% endblock content %}

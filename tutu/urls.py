@@ -17,6 +17,9 @@ Including another URLconf
 from django.urls import path, include, re_path
 from django.contrib import admin
 from rest_framework import routers, serializers, viewsets
+
+from functools import partial
+
 from kasbeer import views
 from m2 import charts
 
@@ -24,9 +27,16 @@ from m2 import charts
 urlpatterns = [
     # path('', include('dashboard.urls')),
     path('admin/', admin.site.urls),
+    path('', views.index, name='swtIndex'),
     path('o/', views.OrderCreation.as_view(), name='ordersGET'),
-    path('o/result/<int:order_id>/', views.order_result_view,
-         name='ordersResult'),
+    path('list/', views.list_orders, name='ordersLIST'),
+    path('results/<int:order_id>/',
+         views.order_result_view,
+         name='ordersResultIndex'),
+    path('results/<int:order_id>/next', views.order_result_view,
+         name='ordersResultNext'),
+    path('results/<int:order_id>/prev', views.order_result_view,
+         name='ordersResultPrev'),
     path('o/<str:action>', views.OrderCreation.as_view(), name='ordersPOST'),
     path('leagues/<str:country>/', views.leagues),
     re_path(r'^test/', views.TestingForms.as_view(), name='testing_things')

@@ -1,0 +1,28 @@
+{% extends 'kasbeer/base-site.html' %}
+
+{% block title %} Strona główna {% endblock %}
+
+{% block header %}
+    <div class="view-title w-100 card-header">
+        <a href="/">SWT</a>
+        <b> Title of view: Strona glowna </b>
+    </div>
+{% endblock header %}
+
+{% block sidebar %}
+    {{ super() }}
+    <div id="other-actions" class="ky card-tertiary">
+        <div class="card-header">Przejdz dalej</div>
+        <div class="card-body">
+            <a href="/o/"><div class="btn btn-secondary w-100">Stworz nowy</div></a>
+            <a href="/list/"><div class="btn btn-secondary w-100">Wylistuj zamowienia</div></a>
+        </div>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <h1>Swt - System Wspomagania Typera</h1>
+    <p>
+        Zapraszam do obstawiania i analizowania. ;)
+    </p>
+{% endblock %}
