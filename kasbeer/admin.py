@@ -41,8 +41,12 @@ class MatchInline(admin.TabularInline):
 
 @admin.register(Analysis)
 class AnalysisAdmin(guardAdmin.GuardedModelAdmin):
-  exclude = ['name']
   search_fields = ['name', 'description']
+
+  def get_exclude(self, request, obj=None):
+    if obj is not None:
+      return ['name', 'task_func']
+    return ['name']
 
 
 @admin.register(Order)
