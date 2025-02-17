@@ -203,16 +203,23 @@ class Analysis(models.Model):
   name = models.CharField(primary_key=True, max_length=128)
   #: Choices here are badly designed, because deploy require do migrations.
   #: TODO: Do choices dynamic, but in form probably it should be.
-  task_func = models.CharField(max_length=128, choices=prepare_choices_tasks(collect_tasks()), verbose_name="Name")
+  task_func = models.CharField(max_length=128,
+                               choices=prepare_choices_tasks(collect_tasks()),
+                               verbose_name="Name")
   # TODO: Add this field in some next iteration
-  description = models.TextField()
+  description = models.TextField(null=True, blank=True,
+                                 help_text="Left this field empty for auto fill"
+                                           " with __doc__ from task function.")
 
   def save(self, **kwargs):
     """Save Analysis with automatically setting name in it."""
     try:
       t = self.task()
+      desc = ' '.join(t.__doc__.strip().split('\n'))
+      desc = ' '.join(filter(None, desc.split(' ')))
       self.name = t.__analysis_name__
-      #self.description = t.__doc__
+      if self.description == "":
+        self.description = desc
       super().save(**kwargs)
     except:
       raise
