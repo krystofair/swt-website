@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 class MatchEntryField(forms.MultiValueField):
   """Single entry at listing list."""
-  DEFAULT_WEIGHT = 1.02
+  DEFAULT_WEIGHT = 1.0
 
   def __init__(self, game=None, stats=None, **kwargs):
     if game:
@@ -29,10 +29,11 @@ class MatchEntryField(forms.MultiValueField):
       forms.BooleanField(required=False,
                          widget=MatchEntryCheckbox(self.summary(game))),
       forms.CharField(required=True, widget=widgets.HiddenInput()),
-      forms.DecimalField(max_value=decimal.Decimal(2.0),
-                         min_value=decimal.Decimal(-1.5),
-                         step_size=decimal.Decimal(0.03),
-                         required=True, widget=WeightRangeWidget())
+      forms.DecimalField(
+        max_value=decimal.Decimal(2),
+        min_value=decimal.Decimal(-0.5),
+        step_size=decimal.Decimal(0.02),
+        required=True, widget=WeightRangeWidget())
     )
 
     super().__init__(
