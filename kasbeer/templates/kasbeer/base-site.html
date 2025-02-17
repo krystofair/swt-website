@@ -16,6 +16,7 @@
         <link rel="stylesheet" href="{{ static('vendors/bootstrap-5.3.3-dist/css/bootstrap.min.css') }}">
         {# <link rel="stylesheet" href="{{ static('vendors/bootstrap-5.3.3-dist/css/bootstrap-grid.css') }}"> #}
         <link rel="stylesheet" href="{{ static('kasbeer/css/custom.css') }}">
+        <link rel="stylesheet" href="{{ static('windows-95-ui-kit/css/w95.css') }}">
     {% endblock stylesheets %}
 
     
@@ -36,11 +37,11 @@
     <div class="ko container"> 
         <div class="row"> {# ROW FOR TWO COLUMNS #}
 
-            <div id="content" class="col-8">
+            <div id="main" class="col-8">
              <header>
             {% block header %}
                 <div class="view-title w-100 card-header">
-                    <a href="/test/1">SWT</a>
+                    <a href="/o/">SWT</a>
                     <b> Title of view: {{ view.title }} </b>
                 </div>
             {% endblock header %}
@@ -58,14 +59,14 @@
                     {% if request.user.is_authenticated %}
                         {{ request.user.username }}
                     {% else %}
-                     The Anonymous | <a href="/admin/login?next=/test/testing/"> Zaloguj sie </a>
+                     The Anonymous | <a href="/admin/login?next=/o/"> Zaloguj sie </a>
                     {% endif %}
                     {# {{ request.user.username if request.user.is_authenticated else 'The Anonymous' }} #}
                 </div>
                 
             {% endblock sidebar %}
 
-                <footer id="my-footer" class=" footer">
+                <footer id="my-footer" class="footer">
                     <p class="fs-6 "> &copy;krystofair 2025 </p>
                 </footer>
             </div>
@@ -84,8 +85,6 @@
 
     {% block javascripts %}
       <script src="{{ static('vendors/jquery-3.7.1-dist/jquery-3.7.1.min.js') }}"></script>
-      <!-- Custom Theme Scripts -->
-      <script src="{{ static('kasbeer/js/custom.js')}}"></script>
       <script src="{{ static('vendors/bootstrap-5.3.3-dist/js/bootstrap.js') }}"></script>
       <script src="{{ static('windows-95-ui-kit/js/w95.js')}}"></script>
     {% endblock javascripts %}

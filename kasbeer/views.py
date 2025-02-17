@@ -4,7 +4,7 @@ from django.forms.models import ModelChoiceIterator
 from django.shortcuts import render, reverse, loader, redirect
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
-from django.views.generic.base import TemplateView
+from django.views.generic.base import TemplateView, View
 from django.http import JsonResponse, HttpResponseRedirect, HttpResponse, HttpRequest
 from django import forms
 
@@ -19,14 +19,23 @@ import logging
 import warehouse.views as wh
 from kasbeer.forms import MatchInlineEntryForm, FilteringForm, MatchFormSet
 from kasbeer import models
+from m2.views import visualize
 
 
 logger = logging.getLogger(__name__)
 
+
+def order_result_view(request, order_id, *args, **kwargs) -> View:
+  order = models.Order.objects.get(id=order_id)
+  job = order.jobs[0]
+  view = visualize(job, **kwargs)
+  return view(request)
+
+
 class OrderCreation(TemplateView):
   template_name = "kasbeer/new-order-view.html"
   template_engine = 'jinja2'
-  title = "Order Creation"
+  title = "Tworzenie zamówienia"
   _orders = dict()
   # form = FilteringForm()
 

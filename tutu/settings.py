@@ -73,6 +73,7 @@ REST_FRAMEWORK = {
 }
 
 KASBEER_TEMPLATES = os.path.join(BASE_DIR, 'kasbeer', 'templates')
+M2_TEMPLATES = os.path.join(BASE_DIR, 'm2', 'templates')
 
 TEMPLATES = [
     {
@@ -90,7 +91,7 @@ TEMPLATES = [
     },
     {
         'BACKEND': 'django.template.backends.jinja2.Jinja2',
-        'DIRS': [KASBEER_TEMPLATES],
+        'DIRS': [KASBEER_TEMPLATES, M2_TEMPLATES],
         'APP_DIRS': True,
         'OPTIONS': {
             'environment': 'tutu.jinja2.environment'
