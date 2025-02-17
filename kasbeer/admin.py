@@ -9,6 +9,31 @@ import warehouse.views as wh
 
 # Register your models here.
 
+@admin.register(Job)
+class JobAdmin(admin.ModelAdmin):
+  """JobAdmin is for checking errors"""
+  list_display = ['is_good', 'analysis', 'order']
+  list_filter = ['analysis_name', 'order']
+  ordering = ['error']
+
+  def get_queryset(self, request):
+    qs = super().get_queryset(request)
+    return qs.filter(error__isnull=False)
+
+  def is_good(self, obj, *args, **kwargs):
+    return "⛔️" if obj.error else "👌️"
+
+  def get_view_on_site_url(self, obj=None):
+    pass
+
+  def has_change_permission(self, request, obj=None):
+    False
+
+  def has_delete_permission(self, request, obj=None):
+    False
+
+  def has_add_permission(self, request):
+    False
 
 class JobInline(admin.TabularInline):
   model = Job

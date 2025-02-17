@@ -69,30 +69,15 @@ class Engine:
         #: WARNING! If this can be run by specific user? Where the user object coming from?  - from order see orders.models
         task = analysis.task()
         #task.delay() # XXX: this will be in power when use celery.
-        df: "pandas.DataFrame" = task(list(order.match_set.all()))
+        try:
+          dataframe = task(list(order.match_set.all()))
+        except Exception as e:
+          job.error = str(e)[:256]
+          dataframe = pandas.DataFrame()
         results += 1
-        # try:
-        #   full_path = ANALYSIS_SINK_PATH.format(
-        #     timestamp=format(order.created_at, "%Y-%m-%d_%H%M"),
-        #     name=analysis.task_func
-        #   )
-        #   dir_path = full_path.rstrip(f"/{analysis.task_func}.csv")
-        #   try:
-        #     os.mkdir(dir_path)
-        #   except OSError:
-        #     pass # dir exists.
-        #   if isinstance(df, dict):
-        #     for key, dataframe in df.items():
-        #       dataframe.to_csv(f"{dir_path}/{analysis.task_func}_{key}.csv")
-        #   else:
-        #     df.to_csv(full_path, index=False)
-        # except Exception as e:
-        #   self.log.error("Saving results analysis to file failed.")
-        #   self.log.exception(e)
-        job.df = df
+        job.df = dataframe
         self.log.debug(job.df)
         job.save()
-        self.log.debug(f"{job.result=}")
       except models.Analysis.DoesNotExist:
         self.log.warning("User choose analysis which wasn't add by admin.")
       except Exception as e:

@@ -244,7 +244,8 @@ class Job(models.Model):
   """
   order = models.ForeignKey(Order, on_delete=models.CASCADE)
   analysis_name = models.CharField(max_length=128, choices=[(t['name'], t['name']) for t in collect_tasks()])
-  result = models.JSONField(null=True)
+  result = models.JSONField(null=True, blank=True)
+  error = models.CharField(max_length=512, blank=True, null=True)
   #: There is better method for doing this - converting field, solution for short time.
   df = None
 
