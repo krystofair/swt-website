@@ -80,3 +80,51 @@ class CornerLineAnalysisResult1(Result):
       })
     option['xaxis']['categories'] = list(df['match_id'])
     return {"name": option, "name2": option}
+
+@sign_for(task_func=tasks.analyse_corners_2)
+class CornersLinesResult2(Result):
+  def load_data(self, **kwargs):
+    return self.stack_bar_plot()
+  def stack_bar_plot(self, **kwargs):
+    options = {
+      "chart": {
+        "type": "bar",
+        "stacked": "false"
+      },
+      "series": [{
+        'name': 'corners-over',
+        'data': [{
+            "x": line,
+            "y": list(self.dataframe.loc[['weight_over'], line])
+          } for line in self.dataframe.columns]
+        },{
+        'name': 'corners-under',
+        'data': [{
+            "x": line,
+            "y": list(self.dataframe.loc[['weight_under'], line])
+          } for line in self.dataframe.columns]
+        },
+        {
+          'name': 'weight-diff-abs',
+          'data': [{
+            "x": line,
+            "y": list(self.dataframe.loc[['diff_abs'], line])
+          } for line in self.dataframe.columns]
+        }
+      ],
+      "xaxis": {
+        "type": "category"
+        # "categories": kwargs.get('categories', [])
+      },
+      "yaxis": {
+        "title": {
+          "text": "weight"
+        }
+      },
+      "tooltip": {
+        "y": {
+          "formatter": "function (val) { return val + ' units'; }"
+        }
+      }
+    }
+    return {"stackbar plot": options}

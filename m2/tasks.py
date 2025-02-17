@@ -18,7 +18,8 @@ ANALYSES_MODULE = 'm2.tasks'
 
 logging.basicConfig()
 log = logging.getLogger("AnalysisTasks")
-
+# TODO: Interesting subject to analyse code by decorator and change calling
+#       some function with another (thinking about log, to logger name change)
 
 #def analysis(name, **options):
   #def _from_fun(func):
@@ -139,10 +140,6 @@ def lines_analysis(pframe):
     'under': under * 100
   }
 
-@set_name("Zbierz różne statystyki")
-def correlate_(matches):
-  pass
-
 @set_name("Analiza rzutów rożnych 1")
 def analyse_corners_line_auto(matches):
   """
@@ -155,7 +152,60 @@ def analyse_corners_line_auto(matches):
     # , 'yellow-cards', 'shots-on-target', 'shots-off-target']
     pframe = common_to_stat_analyses(['corner-kicks'], matches)
     return pframe
+  except Exception as e:
+    # TODO: Raise error to be saved in errors (upframe).
+    log.exception(e)
+    return pd.DataFrame()
 
+
+@set_name("Rzuty rożne describe dla Boxa")
+def corners_box_describe_totals(matches):
+  """Soon or later there will be for specific teams too."""
+  try:
+    pframe = common_to_stat_analyses(['corner-kicks'], matches)
+    pframe['total'] = pframe['home'] + pframe['away']
+    pframe = pframe.drop(['home', 'away', 'name', 'match_id'], axis=1)
+    describe_df = pframe[['total']].describe()
+    return describe_df
+  except Exception as e:
+    log.exception(e)
+    return pd.DataFrame()
+
+@set_name("Analiza rzutów rożnych 2.0")
+def analyse_corners_2(matches):
+  """
+  Wyznacza zmiany wag pomiędzy kolejnymi liniami, i fajnie by było gdyby
+  kolorował je w zależności zmiany wagi over -> under, lub under -> over.
+  Aczkolwiek to chyba zawsze tak samo wyjdzie - uwidzimy.
+  """
+  try:
+    # home | away | match_id | name | weight
+    # ale drop'uję te match_id i name , więc mamy
+    # home | away | weight
+    pframe = common_to_stat_analyses(['corner-kicks'], matches)
+    #: create sum from home and away
+    pframe['total'] = pframe['home'] + pframe['away']
+    pframe = pframe.drop(['home', 'away', 'name', 'match_id'], axis=1)
+
+    ### badanie linii z ramki pframe
+    lines = np.arange(0.5, 25.5, 1)
+    over = pd.DataFrame()
+    under = over.copy()
+
+    for line in lines:
+      over[str(line)] = pframe.loc[pframe['total'] > line, ['weight']].sum()
+      under[str(line)] = pframe.loc[pframe['total'] < line, ['weight']].sum()
+
+    over = over.rename({'weight': 'weight_over'})
+    under = under.rename({'weight': 'weight_under'})
+    total_weight = pframe['weight'].sum()
+    ou = pd.concat([over, under], axis=0)
+    ou.loc['weight_under', :] = ou.loc['weight_under', :].shift(-1)
+    ou.loc['diff_sign', :] = ou.loc['weight_over', :] - ou.loc['weight_under', :]
+    ou.loc['diff_abs', :] = ou.loc['diff_sign', :].abs()
+    ou = ou.loc[:, ou.loc['diff_abs', :] < total_weight]
+    log.info(ou)
+    return ou
   except Exception as e:
     log.exception(e)
     return pd.DataFrame()
