@@ -5,6 +5,7 @@ function send_order() {
     // order is name of form, so `<form name='order' ... >`
     const form = document.forms.match_list;
     form.action = "/o/accept"
+    form.append(document.getElementById('order_summary'))
     form.submit()
     console.log('submitted for save order to processing')
 }

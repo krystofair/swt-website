@@ -141,3 +141,8 @@ class MatchFormSet(forms.BaseFormSet, forms.Form):
 
   def save_new(self, form, commit=False):
     return super().save_new(form, commit)
+
+
+class CommitOrderForm(forms.Form):
+  """Simplify form for add summary to order."""
+  summary = forms.CharField(max_length=64)

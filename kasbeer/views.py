@@ -18,7 +18,9 @@ import logging
 # project's imports
 #: API for names .
 import warehouse.views as wh
-from kasbeer.forms import MatchInlineEntryForm, FilteringForm, MatchFormSet
+from kasbeer.forms import (
+  MatchInlineEntryForm, FilteringForm, MatchFormSet, CommitOrderForm
+)
 from kasbeer import models
 from m2.views import visualize
 
@@ -121,6 +123,10 @@ class OrderCreation(TemplateView):
 
   def _commit_order_action(self, request, **kwargs):
     order = self.get_order_by_session(request)
+    order_summary_form = CommitOrderForm(request.POST)
+    if order_summary_form.is_valid():
+      order.summary = order_summary_form.cleaned_data['summary']
+      logger.debug(order_summary_form.cleaned_data['summary'])
     job1 = models.Job(analysis_name="Analiza rzutów rożnych 1")
     job2 = models.Job(analysis_name="Analiza rzutów rożnych 2.0")
     # job3 = models.Job(analysis_name="Rzuty rożne describe dla Boxa")
