@@ -78,7 +78,7 @@ class Order(models.Model):
     compl = '✅️' if self.complete else '🔜️'
     d = ' DRAFT' if self.draft else ''
     creat = format(self.created_at, "%d/%m/%Yt%H:%M:%S")
-    return f"ORD({creat}<{self.summary}>) {compl}{d}"
+    return f"Order({creat},{self.summary}) {compl}{d}"
 
   def __repr__(self):
     return (f"Order({self.id})")
