@@ -158,7 +158,11 @@ class Stats(API):
       ids = [m.identifier for m in matches]
     except AttributeError:
       ids = matches
-    query = (sa.select(*cls.BasicView, Match.match_id).where(Statistic.name.in_(names))
+    # TODO: here not necessary is this JOIN for matches,
+    #       match_id exists in staistics table too.
+    query = (sa.select(*cls.BasicView, Match.match_id)
+             .distinct(Statistic.match_id, Statistic.name)
+             .where(Statistic.name.in_(names))
              .join(Match).where(Match.match_id.in_(ids)))
     result_t_mappings = API._exe_query(query)
     if len(result_t_mappings) < len(ids):
@@ -168,6 +172,7 @@ class Stats(API):
         .format( len(ids) - len(result_t_mappings), ','.join(lack_of_set))
       )
     single_frame = pd.DataFrame(result_t_mappings)
+    single_frame = single_frame.drop_duplicates(subset='match_id')
     log.debug(single_frame)
     #single_frame.groupby(['name'])
     return single_frame, errors
