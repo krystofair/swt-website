@@ -43,12 +43,12 @@ def order_result_view(request, order_id, *args, **kwargs) -> View:
     session_page.update({
       request.session.session_key: page
     })
+    if job.error:
+      return ErrorResult.as_view(error=job.error)(request)
     view = visualize(job, **kwargs)
     return view(request)
   except (ValueError, IndexError):
     raise http.Http404("There is no more results.")
-
-
 
 @never_cache
 def list_orders(request, **kwargs):
@@ -150,34 +150,11 @@ class OrderCreation(TemplateView):
 
 
 # @method_decorator(never_cache, name='dispatch')
-class TestingForms(TemplateView):
+class ErrorResult(TemplateView):
+  template_name = 'kasbeer/job-error.html'
   template_engine = 'jinja2'
-  title = "Tworzenie orderu :O"
-  template_name = "kasbeer/new-order-view.html"
-
-  def _prepare_url_(self, tn):
-    tn = tn.rstrip('.html')
-    self.template_name = f"/kasbeer/{tn}.html"
-
-  def get_context_data(self, **kwargs):
-    return super().get_context_data(**kwargs)
-
-  def get(self, request, *args, **kwargs):
-    ctx = {}
-    if request.GET.dict():
-      form = FilteringForm(request, request.GET)
-    else:
-      form = FilteringForm(request)
-    ctx['form'] = form
-    if form.is_valid():
-      #: Find all matches from filters - call API
-      matches = form.search()
-      mform = MatchFormSet(games=matches)
-      ctx |= {'matches': mform}
-    ctx |= self.get_context_data(**ctx)
-    resp = render(request, template_name=self.template_name,
-                  using=self.template_engine, context=ctx)
-    return resp
+  title = 'Przegladanie wynikow - blad w wyliczaniu'
+  error = None
 
 def leagues(request, country, **kwargs):
   ls = wh.Names.list_leagues(country.lower())
