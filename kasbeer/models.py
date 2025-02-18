@@ -114,7 +114,13 @@ class Order(models.Model):
       case Job():
         self._jobs.append(value)
       case Match():
-        self._matches.append(value)
+        for m in self._matches:
+          if m.identifier == value.identifier:
+            #: Only update weight in match
+            m.weight = value.weight
+            break
+        else:
+          self._matches.append(value)
       case _:
         logger.warning("Tried of append {} of type {}".format(value, type(value)))
 
