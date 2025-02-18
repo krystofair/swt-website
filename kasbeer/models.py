@@ -27,29 +27,6 @@ from m2 import views as m2_api
 
 logger = logging.getLogger(__name__)
 
-# class OrderSessionRepo(models.QuerySet):
-#   """
-#       Manage orders in session context.
-#   """
-#   # _store = {}   # session_id => order
-#   def __init__(self, *args, **kwargs):
-#     self._db = "orders_repository"
-#   def create(self, **kwargs):
-#     Order.objects.create(
-#       draft=True,
-#       complete=False,
-#
-#     )
-#
-#
-#   def get_or_create(self, defaults=None, **kwargs):
-#     super().get_or_create(defaults, **kwargs)
-#
-# class SessionOrder(models.Model):
-#   order = models.OneToOneField(Order, models.CASCADE)
-#   session = models.OneToOneField(Session, models.CASCADE, primary_key=True)
-#   objects = OrderSessionRepo.as_manager()  # default_manager
-
 class Order(models.Model):
   draft = models.BooleanField(default=False)
   """User can save order as undone yet."""
@@ -57,6 +34,7 @@ class Order(models.Model):
   created_at = models.DateTimeField(verbose_name="creation datetime",
                                     auto_now=True)
   user = models.ForeignKey(User, on_delete=models.CASCADE)
+  summary = models.CharField(max_length=64, blank=True, null=True)
   """Every order belongs to some user after saved."""
   # object = models.Manager()  # default manager
 
@@ -99,8 +77,8 @@ class Order(models.Model):
   def __str__(self):
     compl = '✅️' if self.complete else '🔜️'
     d = ' DRAFT' if self.draft else ''
-    creat = self.created_at.isoformat()
-    return f"Order({creat}) {compl}{d}"
+    creat = format(self.created_at, "%d/%m/%Yt%H:%M:%S")
+    return f"Order({creat},{self.summary}) {compl}{d}"
 
   def __repr__(self):
     return (f"Order({self.id})")

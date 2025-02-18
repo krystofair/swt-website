@@ -6,8 +6,10 @@
     <link rel="stylesheet" href="{{ static('windows-95-ui-kit/css/w95.css') }}">
 {% endblock stylesheets%}
 
+
 {% block sidebar %}
     {{ super() }}
+    
     <div id="match-filtering" class="k3 card-tertiary">
         <div class="card-header"> Wyszukaj przez ... </div>
         <div class="card-body">
@@ -17,6 +19,14 @@
                     Szukaj
                 </button>
             </form>
+        </div>
+    </div>
+    <div class="k3 card-tertiary">
+        <div class="card-header"> Meta dane zamowienia </div>
+        <div class="card-body">
+           <input type="text" name="summary"
+                  id="order_summary" class="w-100"
+                  placeholder="podsumowanie">
         </div>
     </div>
     <div id="other-actions" class="ky card-tertiary">
