@@ -38,8 +38,7 @@ urlpatterns = [
     path('results/<int:order_id>/prev', views.order_result_view,
          name='ordersResultPrev'),
     path('o/<str:action>', views.OrderCreation.as_view(), name='ordersPOST'),
-    path('leagues/<str:country>/', views.leagues),
-    re_path(r'^test/', views.TestingForms.as_view(), name='testing_things')
+    path('leagues/<str:country>/', views.leagues)
     #   path('orders/filters/', views.FilterView.as_view()),
     #   path('orders/select/', views.ChosenMatchesView.as_view()),
     #   path('orders/save/', views.OrderNewView.as_view()),  # method POST
