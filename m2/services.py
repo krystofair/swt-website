@@ -9,7 +9,6 @@ import os
 import queue
 import threading
 import logging
-import traceback
 
 from kasbeer import models
 from tutu.settings import ANALYSIS_SINK_PATH
@@ -72,8 +71,8 @@ class Engine:
         #task.delay() # XXX: this will be in power when use celery.
         try:
           dataframe = task(list(order.match_set.all()))
-        except Exception:
-          job.error = str(traceback.format_exc())[:256]
+        except Exception as e:
+          job.error = str(e)[:256]
           dataframe = pandas.DataFrame()
         results += 1
         job.df = dataframe
