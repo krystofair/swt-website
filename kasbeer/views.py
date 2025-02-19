@@ -22,12 +22,13 @@ from kasbeer.forms import (
   MatchInlineEntryForm, FilteringForm, MatchFormSet, CommitOrderForm
 )
 from kasbeer import models
-from m2.views import visualize
+from m2.api import visualize
 
 
 logger = logging.getLogger(__name__)
 
 session_page = {}
+
 
 def order_result_view(request, order_id, *args, **kwargs) -> View:
   order = models.Order.objects.get(id=order_id)
@@ -38,17 +39,23 @@ def order_result_view(request, order_id, *args, **kwargs) -> View:
       page += 1
     case "prev":
       page -= 1
+  if page < 0:
+    page = len(order.jobs) - 1
+  elif page >= len(order.jobs):
+    page = 0
+  job = order.jobs[page]
+  session_page.update({
+    request.session.session_key: page
+  })
+  if job.error:
+    return ErrorResult.as_view(error=job.error)(request)
   try:
-    job = order.jobs[page]
-    session_page.update({
-      request.session.session_key: page
-    })
-    if job.error:
-      return ErrorResult.as_view(error=job.error)(request)
     view = visualize(job, **kwargs)
     return view(request)
-  except (ValueError, IndexError):
-    raise http.Http404("There is no more results.")
+  except Exception as e:
+    logger.exception(e)
+    return ErrorResult.as_view(error=e)(request)
+
 
 @never_cache
 def list_orders(request, **kwargs):
@@ -129,9 +136,10 @@ class OrderCreation(TemplateView):
       logger.debug(order_summary_form.cleaned_data['summary'])
     job1 = models.Job(analysis_name="Analiza rzutów rożnych 1")
     job2 = models.Job(analysis_name="Analiza rzutów rożnych 2.0")
-    # job3 = models.Job(analysis_name="Rzuty rożne describe dla Boxa")
+    job3 = models.Job(analysis_name="Rzuty rożne describe dla Boxa")
     order.append(job1)
     order.append(job2)
+    order.append(job3)
     #: This try is for saving order as draft if something goes wrong
     #: Then raise (not yet defined) exception to inform user.
     # try:
@@ -153,9 +161,11 @@ class OrderCreation(TemplateView):
 class ErrorResult(TemplateView):
   template_name = 'kasbeer/job-error.html'
   template_engine = 'jinja2'
-  title = 'Przegladanie wynikow - blad w wyliczaniu'
+  title = 'Przegladanie wynikow - problem'
   error = None
+
 
 def leagues(request, country, **kwargs):
   ls = wh.Names.list_leagues(country.lower())
   return JsonResponse(ls, safe=False)
+

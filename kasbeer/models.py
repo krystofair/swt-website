@@ -20,7 +20,7 @@ from datetime import datetime
 
 #: project imports
 from m2.tasks import collect_tasks, prepare_choices_tasks, ANALYSES_MODULE
-from m2 import views as m2_api
+from m2 import api as m2_api
 
 
 # Create your models here.

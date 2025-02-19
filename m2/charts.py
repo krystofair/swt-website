@@ -1,130 +1,99 @@
-"""
+try:
+  import orjson as jsonlib
+except ModuleNotFoundError:
+  import json as jsonlib
 
-"""
-from django.views.generic import TemplateView
-from django.shortcuts import render
-
-import importlib
 import copy
 
-from . import tasks
 
-REGISTRY = {}
-
-def sign_for(task_func):
-  def wrapper(result_class):
-    # TODO: Analysis could be more than one results class.
-    REGISTRY[task_func.__qualname__] = result_class
-    return result_class
-  return wrapper
-
-def select(job) -> TemplateView:
-  return REGISTRY.get(job.analysis().task_func, None)
-  # result_class = None
-  # try:
-  #   this_module = importlib.import_module('charts', 'm2')
-  #   result_class = getattr(this_module, REGISTRY[job.analysis().task_func])
-  # except ModuleNotFoundError:
-  #   # log.error("Selecting result for anlysis task {} failed.".format(
-  #   #     job.analysis().task_func
-  #   # ))
-  #   pass
-  # return result_class
-
-
-class Result(TemplateView):
-  template_engine = "jinja2"
-  template_name = "m2/base.html"
-  title = "Przegladanie wynikow"
-  #:
-  dataframe = None
+class ApexChart:
   """
-      Option JSON which describe how chart will look like.
-      Read "ApexCharts" docs for constructing option.
-      For basic view template `m2/analysis_result.html` is used.
+      Defines format for beiing interpreted by ApexCharts. JavaScript library
+      for which it provides support now.
   """
-  def load_data(self, **kwargs):
-    """Should be override for specific analysis frames."""
-    raise NotImplementedError("Where is data for result?")
+  def __init__(self):
+    #: For junior programmer: This is important cause options in class keep
+    #: sample to use and only fill with data. And class has server process long
+    #: life cycle, so it otherwise will continuously append new data.
 
-  def get_context_data(self, **kwargs):
-    ctx = super().get_context_data(**kwargs)
-    ctx.update(plots = self.load_data())
-    return ctx
+    #: Create own instance for options from sample and get new list for series.
+    self.options = copy.deepcopy(self.__class__.options)
+    self.options['series'] = list()
+
+  def apex(self):
+    return self.options
 
 
-@sign_for(task_func=tasks.analyse_corners_line_auto)
-class CornerLineAnalysisResult1(Result):
-  sample_option = {
-    "chart": {
-      "type": 'bar'
-    },
-    "series": [],
-    # series object is:
-    # {
-    #   "name": 'sales',
-    #   "data": [30, 40, 35, 50, 49, 60, 70, 91, 120]
-    # }
-    "xaxis": {
-      "categories":  [1991,1992,1993,1994,1995,1996,1997, 1998,1999]
-    }
+class AreaChartDescribe(ApexChart):
+  options = {
+    "chart": {"type": "area"},
+    "stroke": {"curve": "smooth"},
+    "series": None,  # [{"type": "area", "data": []}
+    "xaxis": {"categories": ["min", "-std", "mean", "+std", "max"]}
   }
+  def add_line(self, serie_name, min, minus_std, mean, plus_std, max):
+    self.options['series'].append({
+      "name": serie_name,
+      "data": [min, minus_std, mean, plus_std, max]
+    })
 
-  def load_data(self, **kwargs):
-    option = copy.deepcopy(self.sample_option)
-    df = self.dataframe
-    for c in ['home', 'away']:
-      option['series'].append({
-        'name': c,
-        'data': list(df[c])
-      })
-    option['xaxis']['categories'] = list(df['match_id'])
-    return {"name": option, "name2": option}
 
-@sign_for(task_func=tasks.analyse_corners_2)
-class CornersLinesResult2(Result):
-  def load_data(self, **kwargs):
-    return self.stack_bar_plot()
-  def stack_bar_plot(self, **kwargs):
-    options = {
-      "chart": {
-        "type": "bar",
-        "stacked": "false"
-      },
-      "series": [{
-        'name': 'corners-over',
-        'data': [{
-            "x": line,
-            "y": list(self.dataframe.loc[['weight_over'], line])
-          } for line in self.dataframe.columns]
-        },{
-        'name': 'corners-under',
-        'data': [{
-            "x": line,
-            "y": list(self.dataframe.loc[['weight_under'], line])
-          } for line in self.dataframe.columns]
-        },
-        {
-          'name': 'weight-diff-abs',
-          'data': [{
-            "x": line,
-            "y": list(self.dataframe.loc[['diff_abs'], line])
-          } for line in self.dataframe.columns]
-        }
-      ],
-      "xaxis": {
-        "type": "category"
-        # "categories": kwargs.get('categories', [])
-      },
-      "yaxis": {
-        "title": {
-          "text": "weight"
-        }
-      },
-      "tooltip": {
-        "y": {
-          "formatter": "function (val) { return val + ' units'; }"
+class BoxPlot(ApexChart):
+  options = {
+    "series": None,
+    "chart": {"type": "boxPlot"},
+    "plotOptions": {
+      "boxPlot": {
+        "colors": {
+          "upper": "#E61035",
+          "lower": "#E6865D"
         }
       }
     }
-    return {"stackbar plot": options}
+  }
+  def add_box(self, label, min, q1, q2, q3, max):
+    if 'data' not in self.options['series'][0]:
+      self.options['series'].append({"data": []})
+    data = self.options['series'][0]['data']
+    data.append({
+        "x": label,
+        "y": [min, q1, q2, q3, max]
+    })
+
+
+class StackBarPlot(ApexChart):
+  options = {
+    "chart": {
+      "type": "bar",
+      "stacked": "true"
+    },
+    'series': None,
+    "xaxis": {
+      "type": "category"
+    },
+    "tooltip": {
+      "y": {
+        "formatter": "function (val) { return val + ' units'; }"
+      }
+    }
+  }
+  def __init__(self, custom_option=None, **kwargs):
+    super().__init__(**kwargs)
+    if custom_option:
+      self.options.update(custom_option)
+
+  def custom_yaxis_title(self, title):
+    return {
+      "yaxis": {
+        "title": {
+          "text": title
+        }
+      }
+    }
+
+  def add_serie(self, serie_name, x_values, y_values):
+    series = self.options['series']
+    series.append({
+      'name': serie_name,
+      'data': [{"x": x, "y": y} for x, y in zip(x_values, y_values)]
+    })
