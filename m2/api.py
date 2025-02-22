@@ -13,7 +13,7 @@ from io import StringIO
 import logging
 
 from .apps import M2Config as m2_app
-from . import views
+from . import views, services
 
 # Create your views here.
 
@@ -25,6 +25,8 @@ def visualize(job, **kwargs):
   ViewClass = views.select(job)
   try:
     if ViewClass is not None:
+      if job.result is None:
+        raise ValueError("Job was not processed in order.")
       result_data = jsonlib.loads(StringIO(job.result).read())
       df = pd.DataFrame.from_dict(result_data)
       logger.debug(df)

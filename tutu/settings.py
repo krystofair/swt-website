@@ -127,6 +127,7 @@ DATABASES = {
         'PORT': '43211',
         'USER': 'postgres',
         'PASSWORD': '+ob_Dz+yM;Zl2Uj.W1G5',
+        'CONN_MAX_AGE': 10800,  # 3 hours
     },
     # 'default': {
     #     'ENGINE': 'django.db.backends.mysql',

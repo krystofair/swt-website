@@ -9,4 +9,5 @@ class M2Config(AppConfig):
     engine = None
     def ready(self):
         from .services import Engine
-        self.__class__.engine = Engine()
+        eng = self.__class__.engine = Engine()
+        eng.start()
