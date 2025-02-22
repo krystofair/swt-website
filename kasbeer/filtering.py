@@ -83,7 +83,7 @@ class FilterUtilMixin:
         Returns:
           Promise = partial for data which should be collected from API (warehouse).
     """
-    matches_api = wh.Matches()
+    matches_api = wh.Matches(wh.Matches.LeagueMatch)
     ctx = dict()
     in_ = lambda x: x in changes
     # data pull out
