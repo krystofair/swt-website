@@ -52,6 +52,9 @@ def order_result_view(request, order_id, *args, **kwargs) -> View:
   try:
     view = visualize(job, **kwargs)
     return view(request)
+  except ValueError as e:
+    # TODO: do served for new exceptions for this kind of (no)error
+    return ErrorResult.as_view(error=e)(request)
   except Exception as e:
     logger.exception(e)
     return ErrorResult.as_view(error=e)(request)
@@ -99,7 +102,9 @@ class OrderCreation(TemplateView):
     try:
       match action:
         case 'games': ctx |= self._add_matches_action(request)
-        case 'accept': ctx |= self._commit_order_action(request)
+        case 'accept': 
+          self._commit_order_action(request)
+          return redirect(reverse("ordersLIST"))
       ctx |= super().get_context_data()
       ctx.update(form=FilteringForm(request))
       return render(request, template_name=self.template_name,
@@ -109,12 +114,13 @@ class OrderCreation(TemplateView):
       return HttpResponse(b"Przetwarzanie zlecenia sie nie powiodlo przykro mi")
 
   def get_order_by_session(self, request):
+    """Retrieve or create (not commited) new order for session"""
     try:
       order = self._orders[request.session.session_key]
     except KeyError:  # order jeszcze nie istnieje
       order = models.Order(draft=False)
     self._orders[request.session.session_key] = order
-    return self._orders[request.session.session_key]
+    return order
 
   def _add_matches_action(self, request, **kwargs):
     #: Pobierz mecze z formularza po zatwierdzeniu
