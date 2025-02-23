@@ -73,9 +73,18 @@ class AnalysisAdmin(guardAdmin.GuardedModelAdmin):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-  list_display = [ 'created_at', 'user', 'complete', 'draft', 'id',]
+  list_display = ['description', 'user', 'complete', 'draft', 'id',]
   inlines = [JobInline, MatchInline]
   list_filter = ['user', 'created_at', 'complete']
+
+  def description(self, obj):
+    # list_of_summary_dicts = list(Order.objects.values("summary").all())
+    # values = map(lambda sd: list(sd.values())[0], list_of_summary_dicts)
+    # filtered = filter(None, values)
+    # max_length = max(map(len, filtered))
+    summ = f"{obj.summary}" if obj.summary else "-"
+    # summ = summ.ljust(max_length)
+    return f"{summ} | {format(obj.created_at, '%d-%m-%Y @ %H:%M')}"
 
   def save_model(self, request, obj, form, change):
     """
