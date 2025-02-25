@@ -33,10 +33,6 @@ urlpatterns = [
     path('results/<int:order_id>/',
          views.order_result_view,
          name='ordersResultIndex'),
-    path('results/<int:order_id>/next', views.order_result_view,
-         name='ordersResultNext'),
-    path('results/<int:order_id>/prev', views.order_result_view,
-         name='ordersResultPrev'),
     path('o/<str:action>', views.OrderCreation.as_view(), name='ordersPOST'),
     path('leagues/<str:country>/', views.leagues)
     #   path('orders/filters/', views.FilterView.as_view()),

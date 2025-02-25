@@ -27,7 +27,6 @@ import m2.views
 
 logger = logging.getLogger(__name__)
 
-session_page = {}
 
 def order_result_view(request, order_id, *args, **kwargs) -> View:
   order = models.Order.objects.get(id=order_id)
