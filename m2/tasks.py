@@ -63,21 +63,6 @@ def set_name(friendly_name):
   return wrapper
 
 
-#%% Temporary some utils to save analysis into file.
-#%%
-
-# def save_result_to_file(f, path=""):
-#   logging.basicConfig(filename="results_of_analyses.csv", format="%(analysis_name)s,%(generation_time)s,%(json_result)s")
-#   log = logging.getLogger(f.__analysis_name__)
-#   log
-#   def wrapper(*args, **kwargs):
-#     generation_time = datetime.now().isoformat(sep='@', timespec="milliseconds")
-#     result = f(*args, **kwargs)
-#
-#     result.to_json()
-#   return wrapper
-
-
 @set_name("Test dodawania analizy")
 def test_add_analysis_choices(matches):
   return test_task(matches)
@@ -168,8 +153,16 @@ def corners_box_describe_totals(matches):
     pframe = common_to_stat_analyses(['corner-kicks'], matches)
     pframe['total'] = pframe['home'] + pframe['away']
     pframe = pframe.drop(['home', 'away', 'name', 'match_id'], axis=1)
-    describe_df = pframe[['total']].describe()
-    return describe_df
+    df = pframe[['total']].describe()
+    mean = df.loc['mean', 'total']
+    std = df.loc['std', 'total']
+    df = df.drop(index=['count','mean','std'])
+    df.loc['50%', 'total'] = mean
+    df.loc['min', 'total'] = 1
+    df.loc['max', 'total'] = 1
+    df.loc['25%', 'total'] = std
+    df.loc['75%', 'total'] = std
+    return df
   except Exception as e:
     log.exception(e)
     raise
