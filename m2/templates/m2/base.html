@@ -40,14 +40,18 @@
         </div>
 
     {% endif %}
-    {# TODO: Paging here, it would be nice. Paging for not load all data at once,
-                look below - maybe something like that. #}
-    {# {% for option in charts[page:page+1] %} #}
-    {# {% for chart_name, option in plots.items() %} #}
-    <div id="chart"></div>
-
-    {# {% endfor %} #}
-    {# <script>charts.at(chart_nr).render()</script> #}
+    {# XXX: Ajax and Charts #}
+    <div id="charts">
+    {% for chart_name, option in plots.items() %}
+        <div id="{{ chart_name|replace(' ', '-') }}" class="plot"></div>
+        <script>
+            new ApexCharts(
+                document.querySelector("#{{ chart_name|replace(' ', '-') }}"),
+                {{ option | tojson }}
+            ).render()
+        </script>
+    {% endfor %}
+    </div>
     
 {% endblock %}
 
@@ -94,24 +98,13 @@
 {% block javascripts %}
 {{ super() }}
 <script>
-    var charts = {
-        {% for chart_name, option in plots.items() %}
-            "{{ chart_name }}": new ApexCharts(
-                document.querySelector("#chart"),
-                {{ option | tojson }}
-            ),
-        {% endfor %}
-    };
     $(document).ready(function() {
-            // $('input[type=radio][name="chart"]').change(function() {
-            $('select[name="chart"]').change(function() {
-                if (chosen != undefined || chosen != null) {
-                    charts[chosen].destroy();
-                }
-                var chosen = $(this).val();
-                charts[chosen].render();
-            });
+        $('select[name="chart"]').change(function() {
+            $('.plot').removeClass('active');
+            let plotIdSelector = '#' + $(this).val().replace(' ', '-');
+            $(plotIdSelector).addClass('active');
         });
+    });
 </script>
 
 {% endblock %}
