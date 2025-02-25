@@ -22,42 +22,16 @@ from kasbeer.forms import (
   MatchInlineEntryForm, FilteringForm, MatchFormSet, CommitOrderForm
 )
 from kasbeer import models
-from m2.api import visualize
+import m2.views
 
 
 logger = logging.getLogger(__name__)
 
 session_page = {}
 
-
 def order_result_view(request, order_id, *args, **kwargs) -> View:
   order = models.Order.objects.get(id=order_id)
-  page = session_page.get(request.session.session_key, 0)
-  last_part = request.path.split('/')[-1]
-  match last_part:
-    case "next":
-      page += 1
-    case "prev":
-      page -= 1
-  if page < 0:
-    page = len(order.jobs) - 1
-  elif page >= len(order.jobs):
-    page = 0
-  job = order.jobs[page]
-  session_page.update({
-    request.session.session_key: page
-  })
-  if job.error:
-    return ErrorResult.as_view(error=job.error)(request)
-  try:
-    view = visualize(job, **kwargs)
-    return view(request)
-  except ValueError as e:
-    # TODO: do served for new exceptions for this kind of (no)error
-    return ErrorResult.as_view(error=e)(request)
-  except Exception as e:
-    logger.exception(e)
-    return ErrorResult.as_view(error=e)(request)
+  return m2.views.ApexChartView.as_view(order=order)(request)
 
 
 @never_cache

@@ -15,6 +15,31 @@
 {% endblock %}
 
 {% block content %}
+    {% if errors %}
+        <!-- Modal -->
+        <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="exampleModalLabel">Bledy jakie wystapily podczas przetwarzania</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {% for err in errors %}
+                    <div>
+                        <h5>{{ err.analysis }}</h5>
+                        <p>{{ err.message }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zamknij</button>
+            </div>
+            </div>
+        </div>
+        </div>
+
+    {% endif %}
     {# TODO: Paging here, it would be nice. Paging for not load all data at once,
                 look below - maybe something like that. #}
     {# {% for option in charts[page:page+1] %} #}
@@ -31,8 +56,10 @@
     <div id="data-x" class="k3 card-tertiary">
         <div class="card-header">Wybor wykresu</div>
         <div class="card-body">
+            <select name="chart">
+                <option>---</option>
             {% for chart_name in plots.keys() %}
-            <div class="form-check-radio">
+            {# <div class="form-check-radio">
                 <div class="form-check">
                     <label class="form-check-label w-75">
                         <span class="fs-6">{{ chart_name }}</span>
@@ -40,24 +67,22 @@
                     <span class="form-check-sign"></span>
                     </label>
                 </div>
-            </div>
-            {# <div class="form-check-radio">
-                <div class="form-check">
-                    <label class="form-check-label w-75">
-                        <span class="fs-6">druga</span>
-                    <input type="radio" name="data-x">
-                    <span class="form-check-sign"></span>
-                    </label>
-                </div>
             </div> #}
+            <option value="{{chart_name}}">{{ chart_name }}</option>
             {% endfor %}
+            </select>
         </div>
     </div>
     <div id="other-actions" class="ky card-tertiary">
         <div class="card-header"> Inne akcje </div>
         <div class="card-body">
-            <a href="prev"><div class="btn btn-secondary w-100">Poprzednia analiza</div></a>
-            <a href="next"><div class="btn btn-secondary w-100">Następna analiza</div></a>
+            {# <a href="prev"><div class="btn btn-secondary w-100">Poprzednia analiza</div></a>
+            <a href="next"><div class="btn btn-secondary w-100">Następna analiza</div></a> #}
+            {% if errors %}
+            <div type="button" class="btn btn-danger w-100" data-bs-toggle="modal" data-bs-target="#errorModal">
+                Pokaz bledy
+            </div>
+            {% endif %}
             <a href="/list">
                 <div class="btn btn-secondary w-100">Wroc do listy zamowien</div>
             </a>
@@ -69,16 +94,17 @@
 {% block javascripts %}
 {{ super() }}
 <script>
-        var charts = {
-            {% for chart_name, option in plots.items() %}
-                "{{ chart_name }}": new ApexCharts(
-                    document.querySelector("#chart"),
-                    {{ option | tojson }}
-                ),
-            {% endfor %}
-        };
-        $(document).ready(function() {
-            $('input[type=radio][name="chart"]').change(function() {
+    var charts = {
+        {% for chart_name, option in plots.items() %}
+            "{{ chart_name }}": new ApexCharts(
+                document.querySelector("#chart"),
+                {{ option | tojson }}
+            ),
+        {% endfor %}
+    };
+    $(document).ready(function() {
+            // $('input[type=radio][name="chart"]').change(function() {
+            $('select[name="chart"]').change(function() {
                 if (chosen != undefined || chosen != null) {
                     charts[chosen].destroy();
                 }
