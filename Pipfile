@@ -15,6 +15,7 @@ django-guardian = "*"
 [dev-packages]
 ; djlint = "*"
 spyder-kernels = "3.0.*"
+black = "*"
 
 [requires]
 python_version = "3.11"
