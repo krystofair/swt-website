@@ -179,10 +179,8 @@ class Analysis(models.Model):
   """Managed objects by admin <-> tasks functions."""
   class Meta:
     verbose_name_plural = "analyses"
-    permissions = (
-      ("view", "Can view analysis in WEBGUI"),
-      ("run", "Can calculate analysis")
-    )
+    #: This permissions are per objects, so that is why not plural form is used.
+    permissions = [("run_analysis", "Can calculate analysis by job")]
 
   name = models.CharField(primary_key=True, max_length=128)
   #: Choices here are badly designed, because deploy require do migrations.
