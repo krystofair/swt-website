@@ -142,6 +142,7 @@ class Stats(API):
       but in the most cases changing them into pandas DataFrames additionally.
   """
   BasicView = (Statistic.name, Statistic.home, Statistic.away)
+  ViewWithGoals = (Match.home_score, Match.away_score, *BasicView)
   
   @classmethod
   def stats(cls, names, matches):
@@ -177,4 +178,33 @@ class Stats(API):
     #single_frame.groupby(['name'])
     return single_frame, errors
 
-  
+  @classmethod
+  def stats_with_goal_result(cls, names, matches):
+    """
+        Retrieve specified statistics (by names) for matches from Data DB
+        and its result counterparts.
+    """
+    query = """
+      SELECT m.home_score, m.away_score, s.home, s.away
+      FROM matches m INNER JOIN statistics s ON m.match_id = s.match_id
+      WHERE s.name IN ('shots-on-goal', 'shots-off-goal') AND m.match_id in ('');
+    """
+    #: Query in sqlAlchemy lang.
+    query = (sa.select(*cls.ViewWithGoals, Match.match_id)
+          .distinct(Statistic.match_id, Statistic.name)
+          .where(Statistic.name.in_(names))
+          .join(Match).where(Match.match_id.in_(ids)))
+    result_t_mappings = API._exe_query(query)
+    if len(result_t_mappings) < len(ids):
+      results_ids = [r.match_id for r in result_t_mappings]
+      lack_of_set = set(ids).difference(set(results_ids))
+      errors.append("There is no stats for {} matches: {}"
+        .format( len(ids) - len(result_t_mappings), ','.join(lack_of_set))
+      )
+    single_frame = pd.DataFrame(result_t_mappings)
+    single_frame = single_frame.drop_duplicates(subset='match_id')
+    log.debug(single_frame)
+    #single_frame.groupby(['name'])
+    return single_frame, errors
+
+
