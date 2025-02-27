@@ -128,12 +128,9 @@ class Order(models.Model):
     super().save(update_fields=['complete'])
 
   def save(self, **kwargs):
-    #: TODO: This method should be rather in some kind of Form.
-    #: before in view logic, created_at analyses and matches object should be added to this aggregate.
     if not self.draft:
+      #TODO: Should be handled by showing modal to client. With info.
       self.validate(raise_exception=True)
-    # if self.validate():
-      # raise ValueError("Should be handled by showing modal to client. With info.")
     #: Actual saving
     #: First save order
     super().save(**kwargs)
@@ -184,12 +181,10 @@ class Analysis(models.Model):
     permissions = [("run_analysis", "Can calculate analysis by job")]
 
   name = models.CharField(primary_key=True, max_length=128)
-  #: Choices here are badly designed, because deploy require do migrations.
-  #: TODO: Do choices dynamic, but in form probably it should be.
+  #: After add task in `tasks` module, you have to run "makemigrations"
   task_func = models.CharField(max_length=128,
                                choices=prepare_choices_tasks(collect_tasks()),
                                verbose_name="Name")
-  # TODO: Add this field in some next iteration
   description = models.TextField(null=True, blank=True,
                                  help_text="Left this field empty for auto fill"
                                            " with __doc__ from task function.")
@@ -251,11 +246,3 @@ class Job(models.Model):
   def __repr__(self):
     return "<Job({}) = {}>".format(self.analysis_name, self.result or "...")
 
-class CustomOrderManager(models.Manager):
-  """
-      Responsible for resulting objects only for specific user.
-      This automatically prevent from visible order from another non-auth user.
-      Then we change basis manager for objects to this one, and add another for
-      admin. The question is it will work or how to configured it futher in admin panel?
-      I cannot answer that now, cause too young in Django I am. TODO. :)
-  """
