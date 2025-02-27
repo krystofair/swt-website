@@ -1,0 +1,28 @@
+:root{
+    --primary: #E62B10;
+    --secondary: #E67510;
+    --secco: #E6500F;
+    --primary-hl: #E61035;
+    --yellowish: #E8C431;
+    --shade: #E6865D;
+}
+
+.plot {
+    display: none;
+}
+.active {
+    display: block;
+}
+
+/* * {
+    margin: 1px;
+    padding: 1px;
+} */
+/* .k1 { border: 2px solid var(--primary); } */
+
+/*
+.k3 { border: 2px solid var(--secco); }
+.kphl { border: 3px solid var(--primary-hl); }
+.shade { border: 2px solid var(--shade); }
+.ky { border: 2px solid var(--yellowish); }
+.ko { border: 2px solid goldenrod; } */
