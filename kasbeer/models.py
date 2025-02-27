@@ -139,8 +139,9 @@ class Order(models.Model):
     super().save(**kwargs)
     #: Saving related objects with setting parent.
     for j in self.jobs:
-      j.order = self
-      j.save()
+      if self.user.has_perm("add_analysis", j.analysis()):
+        j.order = self
+        j.save()
     for m in self.matches:
       m.order = self
       m.save()

@@ -155,8 +155,13 @@ class Process(mp.Process):
       if not order.user.has_perm("kasbeer.run_analysis", analysis):
         #: This kind of warnings should be logged in special admin panel,
         #  cause this shouldn't have ever occured.
-        log.info("User {} does not permission to run this {} job.".format(user, job))
-        log.warning("Not permissions to run analysis {} by user {}".format(analysis, user))
+        log.info("User {} does not permission to run this {} job."
+                 .format(order.user, job)
+        )
+        log.warning("Not permissions to run analysis {} by user {}"
+                    .format(analysis, order.user)
+        )
+        job.error = "Nie masz uprawnień do wykonania tej analizy."
         continue
       log.debug(f"Found analysis! {analysis=!r}")
       try:
