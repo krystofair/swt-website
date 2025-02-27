@@ -94,7 +94,6 @@ class Process(mp.Process):
     self.queue.put(None)  # to unchoke queue.get without waiting timeout.
 
   def run(self):
-    #: Some initialization to not getting stupid warnings
     import sys
     #: Closing std output
     sys.stdout.close()
@@ -129,25 +128,39 @@ class Process(mp.Process):
     """
         Process single order, which was received from queue.
         So many questions here, is it possible to save job like normal in django in another process?
-        TODO: Change it. - now here pool is not used.
+        TODO: Change it. - now, pool is not used here.
     """
-    if order is None:
-      self.logger.info("None as order - processing order stops here.")
-      return
     log = self.logger
-    # order = models.Order.objects.get(id = order_id)
-    #: Order which all jobs succeed are treat as failure to watch by admin or someone in charge.
+    #: Order is None case occurs when there was intent
+    #  to only resume queue from blocking state "get".
+    if order is None:
+      log.info("None as order - processing order stops here.")
+      return
+    #: Orders which was signed as completed will not be processing twice.
+    if order.complete:
+      log.info("Order is completed. Not processing it.")
+      return
+    #: Order which not all jobs succeed are treat as failure to watch by admin or someone in charge.
     results = 0
     log.debug("Processing order! {!r}".format(order))
     jobs = order.job_set.all()
-    log.debug(f"All jobs for that order: {jobs=!r}")
+    # log.debug(f"All jobs for that order: {jobs=!r}")
     for job in jobs:
+      #: eliminate job, which has results
+      if job.result:
+        log.info("Job has already calculated - skip.")
+        continue
       #: search reference analysis by name
       analysis = job.analysis()
+      if not order.user.has_perm("kasbeer.run_analysis", analysis):
+        #: This kind of warnings should be logged in special admin panel,
+        #  cause this shouldn't have ever occured.
+        log.info("User {} does not permission to run this {} job.".format(user, job))
+        log.warning("Not permissions to run analysis {} by user {}".format(analysis, user))
+        continue
       log.debug(f"Found analysis! {analysis=!r}")
       try:
         log.debug(models.Analysis.objects.all())
-        #: WARNING! If this can be run by specific user? Where the user object coming from?  - from order see orders.models
         task = analysis.task()
         #task.delay() # XXX: this will be in power when use celery.
         try:
@@ -164,7 +177,6 @@ class Process(mp.Process):
         log.warning("User choose analysis which wasn't add by admin.")
       except Exception as e:
         log.exception(e)
-        # TODO: notify Admin,
         r = jsonlib.dumps(dict(error=str(e)))
         log.error(r)
     order.set_complete()
