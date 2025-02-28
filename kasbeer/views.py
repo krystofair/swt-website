@@ -113,12 +113,13 @@ class OrderCreation(TemplateView):
     if order_summary_form.is_valid():
       order.summary = order_summary_form.cleaned_data['summary']
       logger.debug(order_summary_form.cleaned_data['summary'])
-    job1 = models.Job(analysis_name="Analiza rzutów rożnych 1")
-    job2 = models.Job(analysis_name="Analiza rzutów rożnych 2.0")
-    job3 = models.Job(analysis_name="Rzuty rożne describe dla Boxa")
-    order.append(job1)
-    order.append(job2)
-    order.append(job3)
+    to_add_jobs = [
+      models.Job(analysis_name="Analiza rzutów rożnych 1"),
+      models.Job(analysis_name="Analiza rzutów rożnych 2.0"),
+      models.Job(analysis_name="Korelacja współczynnika oddanych strzałów do wyniku.")
+    ]
+    for job in to_add_jobs:
+      order.append(job)
     #: This try is for saving order as draft if something goes wrong
     #: Then raise (not yet defined) exception to inform user.
     # try:
@@ -140,7 +141,7 @@ class OrderCreation(TemplateView):
 class ErrorResult(TemplateView):
   template_name = 'kasbeer/job-error.html'
   template_engine = 'jinja2'
-  title = 'Przegladanie wynikow - problem'
+  title = 'Przeglądanie wyników - problem'
   error = None
 
 

@@ -97,3 +97,54 @@ class StackBarPlot(ApexChart):
       'name': serie_name,
       'data': [{"x": x, "y": y} for x, y in zip(x_values, y_values)]
     })
+
+class PieChart(ApexChart):
+  """
+  NIE DZIAŁA TEN PLOT MI :(
+  """
+  options = {
+    "chart": {"type": "donut"},
+    "dataLabels": {
+      "enabled": "true",
+      "formatter": "function(val) { return val + ' units'; }",
+      "dropShadow": {
+        "enabled": "false",
+        "top": 1,
+        "left": 1,
+        "blur": 1,
+        "color": '#000',
+        "opacity": 0.45
+      }
+    },
+    "series": None,
+    "labels": None,
+    "chartOptions": {
+      "labels": None
+    },
+    "dropShadow": {
+      "enabled": "false",
+      "top": 1,
+      "left": 1,
+      "blur": 1,
+      "color": '#000',
+      "opacity": 0.45
+    }
+  }
+  def __init__(self):
+    super().__init__()
+    self.options['labels'] = list()
+    self.options['chartOptions']['labels'] = list()
+
+  def fill_whole_pie(self, kw_names_values):
+    newd = {k: v for k, v in kw_names_values.items() if v > 0}
+    if len(newd) == 0:
+      raise ValueError("Brak sensownych danych.")
+    self.options['labels'] = list(newd.keys())
+    self.options['chartOptions']['labels'] = self.options['labels']
+    self.options['series'] = list(newd.values())
+
+  def add_serie(self, name, value):
+    if value > 0:
+      self.options['series'].append(value)
+      self.options['labels'].append(name)
+    self.options['chartOptions']['labels'] = self.options['labels']

@@ -173,6 +173,8 @@ class Process(mp.Process):
           job.error = None  # important when calculated second time
           results += 1
         except Exception as e:
+          log.error("task execution error")
+          log.exception(e)
           job.error = str(e)[:256]
           dataframe = pandas.DataFrame()
         job.df = dataframe

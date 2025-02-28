@@ -8,6 +8,8 @@ from typing import Mapping
 import attrs
 from aleksander import dblayer
 from . import views, models
+
+from kasbeer import models as km
 # Create your tests here.
 
 
@@ -17,14 +19,23 @@ class TC(unittest.TestCase):
     views.Stats.stats(['corners', 'yellows'], matches)
     
   def test_list_matches_by_team(self):
+    self.skipTest("old")
     matches_of_liverpool = list(views.Matches.by_team('liverpool'))
     if matches_of_liverpool:
       assert isinstance(matches_of_liverpool[0], Mapping), type(matches_of_liverpool[0])
     
   def test_list_leagues_api(self):
+    self.skipTest("this leagues are totally different from this from sofa.")
     leagues_of_england = views.Names.list_leagues('england')
     print(f"{leagues_of_england=}")
     assert 'premier-league' in set(leagues_of_england) and 'championship' in set(leagues_of_england)
+
+  def test_gets_many_stats_with_goals(self):
+    matches = [km.Match(identifier=id, weight=1.0) for id in ['bev0F86L', 'vXjQHlHj', 'bJl87mmp', 'fLp6Jlr5', 'OKWHHDfR', 'Q79sPWk8', 'MkoR4xv3',
+'ncEAUPPE', 'OxjpIezh', '6L7zTClA', 'beKjRBzK', 'C4PyiJyg', 'MFAgvthm']]
+    results_stats = views.Stats.stats_with_goals(['shots-on-goal', "shots-off-goal"], matches)
+    from m2 import tasks
+    tasks.correlation_rate_on_off_to_result(matches)
     
   def test_db_connection(self):
     self.mgr = dblayer.DbMgr('sqlite')

@@ -173,38 +173,48 @@ class Stats(API):
         .format( len(ids) - len(result_t_mappings), ','.join(lack_of_set))
       )
     single_frame = pd.DataFrame(result_t_mappings)
-    single_frame = single_frame.drop_duplicates(subset='match_id')
+    single_frame = single_frame.drop_duplicates(subset=['match_id', 'name'])
     log.debug(single_frame)
     #single_frame.groupby(['name'])
     return single_frame, errors
 
   @classmethod
-  def stats_with_goal_result(cls, names, matches):
+  def stats_with_goals(cls, names, matches):
     """
         Retrieve specified statistics (by names) for matches from Data DB
         and its result counterparts.
     """
     query = """
-      SELECT m.home_score, m.away_score, s.home, s.away
+      SELECT m.home, m.away, m.home_score, m.away_score, s.home, s.away, s.name
       FROM matches m INNER JOIN statistics s ON m.match_id = s.match_id
       WHERE s.name IN ('shots-on-goal', 'shots-off-goal') AND m.match_id in ('');
     """
-    #: Query in sqlAlchemy lang.
-    query = (sa.select(*cls.ViewWithGoals, Match.match_id)
-          .distinct(Statistic.match_id, Statistic.name)
-          .where(Statistic.name.in_(names))
-          .join(Match).where(Match.match_id.in_(ids)))
-    result_t_mappings = API._exe_query(query)
-    if len(result_t_mappings) < len(ids):
-      results_ids = [r.match_id for r in result_t_mappings]
-      lack_of_set = set(ids).difference(set(results_ids))
-      errors.append("There is no stats for {} matches: {}"
-        .format( len(ids) - len(result_t_mappings), ','.join(lack_of_set))
+    errors = []
+    try:
+      ids = [ m.identifier for m in matches ]
+      #: Query in sqlAlchemy lang.
+      query = (sa.select(Match.home, Match.away, *cls.ViewWithGoals, Match.match_id)
+            .distinct(Statistic.match_id, Statistic.name)
+            .where(Statistic.name.in_(names))
+            .join(Match).where(Match.match_id.in_(ids)))
+      #TODO: vector comparizon should be whenever
+      result_t_mappings = API._exe_query(query)
+      if len(result_t_mappings) < len(ids):
+        results_ids = [r.match_id for r in result_t_mappings]
+        lack_of_set = set(ids).difference(set(results_ids))
+        errors.append("There is no stats for {} matches: {}"
+          .format( len(ids) - len(result_t_mappings), ','.join(lack_of_set))
+        )
+      single_frame = pd.DataFrame(result_t_mappings)
+      single_frame = single_frame.drop_duplicates(subset=['match_id', 'name'])
+      single_frame = single_frame.rename(
+        mapper={"away_1": "stat_away", "home_1": "stat_home"},
+        axis=1
       )
-    single_frame = pd.DataFrame(result_t_mappings)
-    single_frame = single_frame.drop_duplicates(subset='match_id')
-    log.debug(single_frame)
-    #single_frame.groupby(['name'])
-    return single_frame, errors
+      log.debug(f"==Dataframe from WareHouse==\n{single_frame}")
+      return single_frame, errors
+    except Exception as err:
+      log.exception(err)
+      return pd.DataFrame(), err
 
 

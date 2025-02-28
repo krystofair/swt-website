@@ -2,7 +2,7 @@
 
 {% block meta %}
 {{ super() }}
-<script src="{{ static('apexcharts-bundle/dist/apexcharts.js') }}"></script>
+<script src="{{ static('apexcharts.js-4.5.0/dist/apexcharts.js') }}"></script>
 {% endblock %}
 
 {% block title %} Przeglądanie wyników {% endblock %}
@@ -10,7 +10,7 @@
 
 {% block stylesheets %}
     {{ super() }}
-    <link rel="stylesheet" href="{{ static('apexcharts-bundle/dist/apexcharts.css') }}">
+    <link rel="stylesheet" href="{{ static('apexcharts.js-4.5.0/dist/apexcharts.css') }}">
     <link rel="stylesheet" href="{{ static('m2/custom.css') }}">
 {% endblock %}
 

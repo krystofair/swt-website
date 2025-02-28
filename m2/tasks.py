@@ -62,17 +62,11 @@ def set_name(friendly_name):
     return f
   return wrapper
 
-
-@set_name("Test dodawania analizy")
-def test_add_analysis_choices(matches):
-  return test_task(matches)
-
-@set_name("Testowa analiza")
-def test_task(matches):
-  cols = pd.Index(list['abcd'])
-  df = pd.DataFrame([1,2,3,4], [5,6,7,8], columns=cols)
-  return df
-
+def _match_as_dict(m):
+  return {
+    "match_id": m.identifier,
+    "weight": np.float64(m.weight)
+  }
 
 def common_to_stat_analyses(stats_list, matches):
   #: List of needed stasts
@@ -206,6 +200,7 @@ def analyse_corners_2(matches):
     log.exception(e)
     raise
 
+
 @set_name("Korelacja posiadania piłki do wyniku meczu")
 def correlation_bp2result(matches):
   """
@@ -220,15 +215,59 @@ def correlation_bp2result(matches):
   # pd.correlate(frame, ms) # XD
   return 0  # brak korelacji XD
 
-@set_name("Szukanie korelacji pomiędzy statystykami")
-def oblicz_korelacje_statystyk_kazdy_z_kazdym(matches):
+
+@set_name("Korelacja współczynnika oddanych strzałów do wyniku.")
+def correlation_rate_on_off_to_result(matches):
   """
-      I coś takiego będzie się dało już na wykresie wyświetlić.
-      Będziemy mieli punkty dla każdej korelacji, których będzie duużo w zakresie -1 do 1.
-      Gdzie korelacja będzie liniowa Pearsona.
-      Jak nie podłączę tutaj KNIMEa to nie ma ciekawych rzeczy tutaj. Szczególnie gdy na każdą rzecz muszę napisać
-      nową funkcję. Ale przesadzam, bo przecież w jednej analizie mogę stworzyć wiele dataframe'ów i napisać do tego
-      widok jaki chcę. Nic mnie nie ogranicza.
+      Obliczanie strzałów oddanych w światło bramki do tych przestrzelonych.
+      Następnie jeśli drużyna przekroczyła wyznaczony próg - aktualnie to jest
+      0.65 - oraz wygrała mecz, to zalicza się jej punkty w ilości wagi za mecz.
   """
-  pass
+  log.info("start task: 'correlation_rate_on_off_to_result'")
+  THRESHOLD = 0.65
+  #: Function for counting rates.
+  def rate(x):
+    a, b = x['shots-on-goal'], x['shots-off-goal']
+    return a / b if b != 0 else a + 1  # plus one instead of infinity.
+  try:
+    #: Run common... to check delta
+    frame = common_to_stat_analyses(['shots-on-goal', 'shots-off-goal'], matches)
+    #: Getting statistics per match
+    df, errors = wh.Stats.stats_with_goals(
+      ['shots-on-goal', 'shots-off-goal'],
+      matches
+    )
+    matches_df = pd.DataFrame(list(map(_match_as_dict, matches)))
+    df = df.drop_duplicates()
+    df = df.set_index('name', drop=True)
+    # %% group and calculate rates
+    multi_index_labels = ['match_id', 'home', 'away', 'home_score', 'away_score']
+    gr = df.groupby(multi_index_labels)
+    df2 = gr.agg(rate)
+    df2 = df2.reset_index()
+    #: Merging calculated rates, stats with weight
+    mdf = matches_df.merge(df2, on='match_id')
+    # %% calculate points
+    stdf = mdf.loc[:, ['stat_home', 'stat_away']]
+    mdf[['points_home', 'points_away']] = np.round(
+      (stdf[stdf > THRESHOLD].mul(mdf['weight'], axis=0)).fillna(0),
+      3
+    )
+    # %% calculate points
+    home_points_per_team = mdf.groupby('home')['points_home'].sum()
+    away_points_per_team = mdf.groupby('away')['points_away'].sum()
+    #: "points" table is |team|points|
+    points = home_points_per_team + away_points_per_team
+    points = points.fillna(0).reset_index()
+    points.columns = ['team_name', 'points']
+    # XXX: Dane muszą być z jednego portalu inaczej to się rozjedzie, ponieważ drużyny będą inaczej nazywane.
+    #    : Ale mam pomysł jak to rozwiązać, sukcesywnie tworzyć tabelę zespołów które są niezależne, czyli stworzę aplikację,
+    #    : na wagtailu, w której będzie cała mapa dynamicznie rozwijana przez AI, żart, normalnie ludzi i do tej tabeli będą porównywane
+    #    : dane spływające z portali.
+    log.info("end task: 'correlation_rate_on_off_to_result'")
+    log.info(f"==Produced DataFrame==\n{points}")
+    return points
+  except Exception as e:
+    log.exception(e)
+    raise
 

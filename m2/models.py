@@ -50,7 +50,7 @@ class ResultService:
             if ResultClass is not None:
                 result_data = jsonlib.loads(StringIO(job.result).read())
                 df = pd.DataFrame.from_dict(result_data)
-                logger.debug(df)
+                # logger.debug(df)
             else:
                 logger.warning(
                     "Not found ResultClass for analysis: {}".format(job.analysis_name)
@@ -61,6 +61,9 @@ class ResultService:
                 results.update(rc.apex)
             except (AttributeError, NotImplementedError):
                 pass
+            except ValueError as e:
+                logger.error(e)
+                errors.append(ErrorResult(job, msg=e))
             except Exception as e:
                 logger.exception(e)
                 errors.append(ErrorResult(job, msg="Wystapily inne bledy, powiadom admina."))
@@ -147,3 +150,18 @@ class CornersLinesResult2(Result):
             "diff_abs", self.dataframe.columns, list(self.dataframe.loc["diff_abs", :])
         )
         return {"stackbar plot": plot.apex()}
+
+@sign_for(tasks.correlation_rate_on_off_to_result)
+class TeamScoringOnPieChart(Result):
+    @cached_property
+    def apex(self, **kwargs):
+        plot = charts.StackBarPlot()
+        #plot = charts.PieChart()
+        points_dict = self.dataframe.set_index('team_name').to_dict().get('points', {})
+        newd = {k: v for k, v in points_dict.items() if v > 0}
+        if len(newd) == 0:
+          raise ValueError("Brak sensownych danych.")
+        plot.add_serie("punkty", newd.keys(), newd.values())
+        # plot.fill_whole_pie(points_dict)
+        logger.debug(plot.apex())
+        return {'korelacja strzaly-wynik': plot.apex()}
