@@ -20,23 +20,15 @@ from rest_framework import routers, serializers, viewsets
 
 from functools import partial
 
-from kasbeer import views
+from kasbeer import views, urls as kasbeer_urls
 from m2 import charts
 
 
 urlpatterns = [
     # path('', include('dashboard.urls')),
     path('admin/', admin.site.urls),
-    path('', views.index, name='swtIndex'),
-    path('o/', views.OrderCreation.as_view(), name='ordersGET'),
-    path('list/', views.list_orders, name='ordersLIST'),
-    path('results/<int:order_id>/',
-         views.order_result_view,
-         name='ordersResultIndex'),
-    path('o/<str:action>', views.OrderCreation.as_view(), name='ordersPOST'),
-    path('leagues/<str:country>/', views.leagues)
-    #   path('orders/filters/', views.FilterView.as_view()),
-    #   path('orders/select/', views.ChosenMatchesView.as_view()),
-    #   path('orders/save/', views.OrderNewView.as_view()),  # method POST
-    #   path('orders/create/', views.OrderCreation.as_view(orders.Order())
+    path('', views.index, name='home'),
+    *kasbeer_urls.urlpatterns,
+    # path('leagues/<str:country>/', views.leagues),
+
 ]

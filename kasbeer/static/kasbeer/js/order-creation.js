@@ -4,7 +4,7 @@ function send_order() {
     // TODO: do verification at server site!
     // order is name of form, so `<form name='order' ... >`
     const form = document.forms.match_list;
-    form.action = "/o/accept"
+    form.action = "/kasbeer/order/accept"
     let os_input = document.getElementById('order_summary')
     let input_hidden_os = os_input.cloneNode()
     input_hidden_os.type = 'hidden'
@@ -12,9 +12,10 @@ function send_order() {
     form.submit()
     console.log('submitted for save order to processing')
 }
+
 function add_games() {
     const form = document.forms.match_list;
-    form.action = "/o/games";
+    form.action = "/kasbeer/order/games";
     form.submit()
     console.log('submitted for adding games to order')
 }
@@ -28,8 +29,4 @@ function change_game_callback(event) {
     } else {
         form_total_forms.value = parseInt(form_total_forms.value) - 1;
     }
-}
-
-function modal_with_analyses() {
-    
 }

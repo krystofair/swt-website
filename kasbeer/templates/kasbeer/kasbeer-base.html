@@ -1,0 +1,28 @@
+{% extends 'kasbeer/base-site.html' %}
+
+{% block stylesheets %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ static('kasbeer/css/kasbeer.css') }}">
+{% endblock stylesheets %}
+
+{% block template %}
+
+    <div class="container m-auto"> {# ROW FOR TWO COLUMNS #}
+        <header class="row text-center">
+                <div class="col-12">
+                {% block header %}{% endblock header %}
+                </div>
+            </header>
+        <main class="row w-100">
+            <div class="content col-8">
+                {% block content %}{% endblock content %}
+            </div>
+            <div class="sidebar col-4">
+            {% block sidebar %}{% endblock sidebar %}
+            </div>
+        </main>
+    </div> {# ROW ENDS HERE #}
+
+{% endblock template %}
+</body>
+</html>

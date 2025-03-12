@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en-GB">
 <head>
     {# {% load static %} #}
 {% block head %}
@@ -7,85 +7,89 @@
     {% block meta %}
         <meta charset='utf-8'>
         <meta http-equiv='X-UA-Compatible' content='IE=edge'>
-        <title>&copy;swt | {% block title %} bazowy widok {% endblock %}</title>
+        <title>&copy;swt | {% block card_title %} baza {% endblock %}</title>
         <meta name='viewport' content='width=device-width, initial-scale=1'>
         {% block blockbots %}<meta name="robots" content="NONE,NOARCHIVE">{% endblock %}
     {% endblock meta %}
 
     {% block stylesheets %}
-        <link rel="stylesheet" href="{{ static('vendors/bootstrap-5.3.3-dist/css/bootstrap.min.css') }}">
-        {# <link rel="stylesheet" href="{{ static('vendors/bootstrap-5.3.3-dist/css/bootstrap-grid.css') }}"> #}
-        <link rel="stylesheet" href="{{ static('kasbeer/css/custom.css') }}">
-        <link rel="stylesheet" href="{{ static('windows-95-ui-kit/css/w95.css') }}">
+        {# Production should use CDN, to optimize traffic from server which has non super throughput network.
+           But this kind of stuff will be cached by webrowser anyway.
+        #}
+        {% if environ.get("PROD", "") %}
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+        {% else %}
+            <link rel="stylesheet" href="{{ static('vendors/bootstrap-5.3.3-dist/css/bootstrap.min.css') }}">
+        {% endif %}
+            {# <link rel="stylesheet" href="{{ static('vendors/bootstrap-5.3.3-dist/css/bootstrap-grid.css') }}"> #}
+        {# local (base.css) CSS-es should stay at the bottom, is our library, and w95.css is non-popular to have CDN >,> #}
+            <link rel="stylesheet" href="{{ static('windows-95-ui-kit/css/w95.css') }}">
+            <link rel="stylesheet" href="{{ static('kasbeer/css/base.css') }}">
     {% endblock stylesheets %}
 
-    
 
 {% endblock head %}
 </head>
 <body  data-bs-theme="light">
 {% block body %}
-    {% if show_modal %}
-        {#
-            Block for shows modal at the top of anything else like in bootstrap docs described. 
-            Children can simply define this block as static content they use and then sterring it
-            by `show_modal` variable.
-        #}
-        {% block modal %}
-        {% endblock %}
-    {% endif %}
-    <div class="ko container"> 
-        <div class="row"> {# ROW FOR TWO COLUMNS #}
-
-            <div id="main" class="col-8">
-             <header>
-            {% block header %}
-                <div class="view-title w-100 card-header">
-                    <a href="/">SWT</a>
-                    <b> Title of view: {{ view.title }} </b>
-                </div>
-            {% endblock header %}
-            </header>
-            <div class="content overflow-y-scroll">
-            {% block content %}
-
-            {% endblock content %}
+    {% include 'kasbeer/login_form.html' %}
+    <nav class="navbar navbar-expand-lg">
+        <div class="d-inline-flex w-100">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <div class="p-2"><a href="/"><div class="btn h-10">Home page</div></a></div>
+                </li>
+                <li class="nav-item disabled">
+                    <div class="p-2"><a href="#"><div class="btn h-10 disabled">News</div></a></div>
+                </li>
+                {% if request.user.is_authenticated %}
+                    <li class="nav-item">
+                        <div class="p-2"><a href="/kasbeer/order/"><div class="btn h-10">New research</div></a></div>
+                    </li>
+                    <li class="nav-item">
+                        <div class="p-2"><a href="/kasbeer/orders/"><div class="btn h-10">Orders history</div></a></div>
+                    </li>
+                {% endif %}
+            </ul>
+                <div class="user-frame text-center">
+                {% if request.user.is_authenticated %}
+                        <a href="/kasbeer/logout/"><div class="h-10">
+                            LOGOUT <span class="username">{{ request.user.username }}</span>
+                        </div></a>
+                {% else %}
+                        <a href="#"><div class="h-10" data-bs-toggle="modal" data-bs-target="#loginModal">
+                            LOGIN
+                        </div></a>
+                {% endif %}
             </div>
-            </div>
-            <div id="sidebar" class="sidebar col-4">
-            {% block sidebar %}
+        </div>
+    </nav>
 
-                <div class="user-frame card-header">
-                    {% if request.user.is_authenticated %}
-                        {{ request.user.username }}
-                    {% else %}
-                     The Anonymous | <a href="/admin/login?next=/o/"> Zaloguj sie </a>
-                    {% endif %}
-                    {# {{ request.user.username if request.user.is_authenticated else 'The Anonymous' }} #}
-                </div>
-                
-            {% endblock sidebar %}
-
-                <div id="my-footer" class="footer">
-                    <p> &copy;krystofair 2025 </p>
-                </div>
-            </div>
-        </div> {# ROW ENDS HERE #}
-        <footer class="footer">
-        {% block footer %}
-<!--            <p class="fs-6 "> &copy;krystofair 2025 </p>-->
-            <p>Classy styles from
-                <a href="https://themesberg.com/product/ui-kit/windows-95-ui-kit">
-                    themesberg/windows-95-ui-kit
-                </a>❤️
+    {% block template %}{% endblock %}
+    
+    <footer class="vw-100">
+        <div class="p-5">
+            <p class="text-center">
+                Classy styles from <a href="https://themesberg.com/product/ui-kit/windows-95-ui-kit">themesberg/windows-95-ui-kit</a>💛️</p>
+            <p class="text-center">
+                Project is based on <a href="https://www.djangoproject.com/">Django</a> and hosted at <a href="https://mikr.us/">Mikr.Us</a>
             </p>
-        {% endblock footer %}
-        </footer>
-    </div>
+            <p class="text-center">
+                <a class="my-sign" href="https://linkedin.com/in/krzysztof-klapyta/">&copy;krystofair 2025</a>
+            </p>
+        </div>
+    </footer>
 
     {% block javascripts %}
-      <script src="{{ static('vendors/jquery-3.7.1-dist/jquery-3.7.1.min.js') }}"></script>
-      <script src="{{ static('vendors/bootstrap-5.3.3-dist/js/bootstrap.js') }}"></script>
+
+        {% if environ.get("PROD", "") %}
+            <script src="https://code.jquery.com/jquery-3.7.1.slim.min.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+        {% else %}
+            <script src="{{ static('vendors/jquery-3.7.1-dist/jquery-3.7.1.min.js') }}"></script>
+            <script src="{{ static('vendors/bootstrap-5.3.3-dist/js/bootstrap.js') }}"></script>
+        {% endif %}
+
       <script src="{{ static('windows-95-ui-kit/js/w95.js')}}"></script>
     {% endblock javascripts %}
 {% endblock body %}

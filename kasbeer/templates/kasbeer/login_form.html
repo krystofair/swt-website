@@ -1,0 +1,26 @@
+<form action="/kasbeer/login/" method="post">
+    <div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+            <div class="modal-header card-header">
+                <h1 class="modal-title fs-5">Login</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center card-body">
+                <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                <label for="login-modal-username">Username
+                    <input id="login-modal-username" type="text" name="username" placeholder="username">
+                </label>
+                <label for="login-modal-password">Password
+                    <input id="login-modal-password" type="password" name="password" placeholder="password">
+                </label>
+                {# <label><input type="checkbox">Accept Terms & Conditions</label> #}
+            </div>
+            <div class="modal-footer card-body">
+                <button type="submit" class="btn btn-primary" data-bs-dismiss="modal">Log In</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+            </div>
+        </div>
+    </div>
+</form>

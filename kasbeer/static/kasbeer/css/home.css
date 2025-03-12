@@ -1,0 +1,23 @@
+:root {
+    --primary: #E62B10;
+    --secondary: #E67510;
+    --secco: #E6500F;
+    --primary-hl: #E61035;
+    --yellowish: #E8C431;
+    --shade: #E6865D;
+}
+
+main {
+    margin:auto;
+    height: 75vh;
+}
+
+.error {
+    color: var(--primary-hl) !important;
+}
+
+.info {
+    color: var(--secondary);
+    font-size: large;
+    font-weight: 800;
+}

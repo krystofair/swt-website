@@ -1,11 +1,11 @@
-{% extends 'kasbeer/base-site.html' %}
+{% extends 'kasbeer/kasbeer-base.html' %}
 
 {% block meta %}
 {{ super() }}
 <script src="{{ static('apexcharts.js-4.5.0/dist/apexcharts.js') }}"></script>
 {% endblock %}
 
-{% block title %} Przeglądanie wyników {% endblock %}
+{% block card_title %} Results {% endblock %}
 
 
 {% block stylesheets %}
@@ -17,28 +17,27 @@
 {% block content %}
     {% if errors %}
         <!-- Modal -->
-        <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-            <div class="modal-header">
-                <h1 class="modal-title fs-5" id="exampleModalLabel">Bledy jakie wystapily podczas przetwarzania</h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                {% for err in errors %}
-                    <div>
-                        <h5>{{ err.analysis }}</h5>
-                        <p>{{ err.message }}</p>
-                    </div>
-                {% endfor %}
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zamknij</button>
-            </div>
+        <div class="modal fade" id="errorModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5">Errors occured during calculations.</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    {% for err in errors %}
+                        <div>
+                            <h5>{{ err.analysis }}</h5>
+                            <p>{{ err.message }}</p>
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zamknij</button>
+                </div>
+                </div>
             </div>
         </div>
-        </div>
-
     {% endif %}
     {# XXX: Ajax and Charts #}
     <div id="charts">
@@ -52,13 +51,13 @@
         </script>
     {% endfor %}
     </div>
-    
+
 {% endblock %}
 
 {% block sidebar %}
     {{ super() }}
     <div id="data-x" class="k3 card-tertiary">
-        <div class="card-header">Wybor wykresu</div>
+        <div class="card-header">Choose chart</div>
         <div class="card-body">
             <select name="chart">
                 <option>---</option>
@@ -78,19 +77,15 @@
         </div>
     </div>
     <div id="other-actions" class="ky card-tertiary">
-        <div class="card-header"> Inne akcje </div>
+        <div class="card-header">Actions</div>
         <div class="card-body">
             {# <a href="prev"><div class="btn btn-secondary w-100">Poprzednia analiza</div></a>
             <a href="next"><div class="btn btn-secondary w-100">Następna analiza</div></a> #}
             {% if errors %}
-            <div type="button" class="btn btn-danger w-100" data-bs-toggle="modal" data-bs-target="#errorModal">
-                Pokaz bledy
+            <div class="btn btn-danger w-100" data-bs-toggle="modal" data-bs-target="#errorModal">
+                Show errors
             </div>
             {% endif %}
-            <a href="/list">
-                <div class="btn btn-secondary w-100">Wroc do listy zamowien</div>
-            </a>
-
         </div>
     </div>
 {% endblock sidebar %}

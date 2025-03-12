@@ -1,48 +1,44 @@
-{% extends 'kasbeer/base-site.html' %}
-{% block title %} Tworzenie zamówienia {% endblock %}
-
-{% block stylesheets %}
-    {{ super() }}
-    <link rel="stylesheet" href="{{ static('windows-95-ui-kit/css/w95.css') }}">
-{% endblock stylesheets%}
-
+{% extends 'kasbeer/kasbeer-base.html' %}
+{% block card_title %} Order creation {% endblock %}
 
 {% block sidebar %}
-    {{ super() }}
-    
     <div id="match-filtering" class="k3 card-tertiary">
-        <div class="card-header"> Wyszukaj przez ... </div>
+        <div class="card-header">Search</div>
         <div class="card-body">
             <form method="get">
                     {{ form.as_div() }}
                 <button class="btn btn-primary w-100 m-t-3" type="submit">
-                    Szukaj
+                    Search
                 </button>
             </form>
         </div>
     </div>
     <div class="k3 card-tertiary">
-        <div class="card-header"> Meta dane zamowienia </div>
+        <div class="card-header">Order</div>
         <div class="card-body">
-           <input type="text" name="summary"
-                  id="order_summary" class="w-100"
-                  placeholder="podsumowanie">
+        <input type="text" name="summary"
+                id="order_summary" class="w-100"
+                placeholder="summary">
+        <div id='send_order-btn'
+                class="btn btn-success w-100"
+                onclick="send_order()">Send</div>
         </div>
     </div>
     <div id="other-actions" class="ky card-tertiary">
-        <div class="card-header"> Inne akcje </div>
+        <div class="card-header">Actions</div>
         <div class="card-body">
-            <div class="btn btn-secondary w-100">Pokaz wybrane</div>
-            <div class="btn btn-secondary w-100">Wybierz analizy</div>
+            <div class="btn btn-secondary w-100 disabled">Show chosen events</div>
+            <div class="btn btn-secondary w-100 disabled">Select analysis</div>
             <div id='accept_current_selections-btn'
-                 class="btn btn-secondary w-100"
-                 onclick="add_games()">Zatwierdz wybory</div>
-            <div id='send_order-btn'
-                 class="btn btn-success w-100"
-                 onclick="send_order()">Wyslij</div>
+                class="btn btn-secondary w-100"
+                onclick="add_games()">Add events to order</div>
         </div>
     </div>
 {% endblock sidebar %}
+
+{% block header %}
+    <h4>Search & Select games</h4>
+{% endblock header %}
 
 {% block content %}
     <form name="match_list" method="post">
@@ -53,7 +49,8 @@
             {{ mform.as_div() }}
         {% endfor %}
     </form>
-{% endblock %}
+{% endblock content %}
+
 {% block javascripts %}
     {{ super() }}
     <script src="{{ static('kasbeer/js/order-creation.js')}}"></script>

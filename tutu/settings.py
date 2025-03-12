@@ -186,6 +186,7 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 LOGIN_REDIRECT_URL = '/'
+LOGIN_URL = "/"
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 ANALYSIS_SINK_PATH = ('/d/analityk/abuilda/abuilda/results'
                      '/{timestamp}/{name}.csv')

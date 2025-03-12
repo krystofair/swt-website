@@ -1,0 +1,114 @@
+:root {
+    --primary: #E62B10;
+    --secondary: #E67510;
+    --secco: #E6500F;
+    --primary-hl: #E61035;
+    --yellowish: #E8C431;
+    --shade: #E6865D;
+}
+
+.navbar {
+    /* color: var(--shade); */
+    background-color: var(--shade) !important;
+}
+
+.navbar li .btn:hover {
+    color: var(--primary-hl);
+}
+
+.navbar .nav-item {
+    text-transform: uppercase;
+}
+
+.navbar .user-frame {
+    text-transform: uppercase;
+    padding: 4px 4px;
+    /* Part rewritten from library, because of JS script. */
+    font-size: .65rem;
+    border-top: 1px solid #08080E;
+    border-left: 1px solid #08080E;
+    border-right: 1px solid #FCFCFC;
+    border-bottom: 1px solid #FCFCFC;
+    /*************************/
+}
+
+.username {
+    font-weight:800;
+}
+
+.user-frame {
+    margin-top: auto;
+    margin-bottom: auto;
+}
+
+.navbar .user-frame-logged_out {
+    margin-top:auto;
+    margin-bottom: auto;
+}
+
+main {
+    width: 100vh;
+}
+
+.btn-success {
+    color: black;
+    background-color: var(--yellowish);
+}
+.btn-success:hover {
+    color: white;
+    background-color: var(--primary-hl);
+}
+.btn-success:active {
+    color: white;
+    background-color: var(--primary) !important;
+}
+
+.btn-secondary {
+    background-color: var(--secco);
+}
+
+.btn-secondary:hover {
+    background-color: var(--secondary);
+}
+
+.btn-secondary:active {
+    background-color: var(--secondary) !important;
+}
+
+
+.btn-primary {
+    color: white;
+    background-color: var(--primary-hl);
+}
+
+.btn-primary:hover {
+    color: white;
+    background-color: var(--secco);
+}
+
+
+.card-tertiary .card-header {
+    color: black !important;
+    background-color: var(--yellowish) !important;
+    font-weight: bold;
+}
+
+footer {
+    background-color: var(--primary);
+    color: white;
+    height: 20em;
+    max-height: 100vh;
+    width: 100vh;
+}
+
+footer a, footer a:visited {
+    color: white;
+}
+
+a.my-sign {
+    text-decoration: none;
+    font-style:none;
+    font-style:italic;
+    font-size: 0.9em;
+    border-bottom: 2px solid var(--shade);
+}

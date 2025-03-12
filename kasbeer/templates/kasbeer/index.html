@@ -1,28 +1,91 @@
 {% extends 'kasbeer/base-site.html' %}
 
-{% block title %} Strona główna {% endblock %}
+{% block card_title %}Home page{% endblock %}
+
+{% block stylesheets %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ static('kasbeer/css/home.css') }}">
+{% endblock stylesheets %}
 
 {% block header %}
-    <div class="view-title w-100 card-header">
-        <a href="/">SWT</a>
-        <b> Title of view: Strona glowna </b>
-    </div>
+    <h3 class="text-center">Home page</h3>
 {% endblock header %}
 
-{% block sidebar %}
-    {{ super() }}
-    <div id="other-actions" class="ky card-tertiary">
-        <div class="card-header">Przejdz dalej</div>
-        <div class="card-body">
-            <a href="/o/"><div class="btn btn-secondary w-100">Stworz nowy</div></a>
-            <a href="/list/"><div class="btn btn-secondary w-100">Wylistuj zamowienia</div></a>
-        </div>
-    </div>
-{% endblock %}
 
-{% block content %}
-    <h1>System Wspomagania Typera</h1>
-    <p>
-        Zapraszam do obstawiania i analizowania. ;)
-    </p>
+{% block template %}
+    {% include 'kasbeer/readmore-modal.html'%}
+    <main class="container">
+        <div class="text-center">
+            {% if polish_version %}
+                {% if request.user.is_authenticated %}
+                    <p>Jesteś zalogowany, co oznacza, że już wiesz co i jak.</p>
+                    <a href="/kasbeer/"><div class="btn-primary">Nowe badanie</div></a>
+
+                {% else %}
+                    <h3 class="w-100 center">S.W.T.</h3>
+                    <p>To system wspomagania typera w codziennych obowiązkach XD</p>
+                    <p>
+                        Polega to na tym że przeglądasz sobie dane z włączonym oprogramowaniem od nas,
+                        dzięki temu my możemy widzieć co przeglądasz - dosłownie. A tak na poważnie,
+                        to nie obchodzi nas nic czego nie potrafimy przetworzyć więc spokojnie bierzemy
+                        tylko statystyki i rzeczy które są interesujące analitycznie. :)
+                        <span style="font-size:larger; font-weight: 400;">Możesz dać nam propozycję utworzenia nowych rzeczy do przetworzenia oraz
+                        wymyślić dlaczego chcemy to brać - podać pomysł na nową analizę.
+                        </span>
+                    </p>
+                    <p>
+                        Nie jesteś zalogowany - 
+                        <div class="btn btn-danger w-100" data-bs-toggle="modal" data-bs-target="#errorModal">
+                            Zaloguj się
+                        </div>
+                    </p>
+                {% endif %}
+            {% else %} {# English version #}
+                {% if request.user.is_authenticated %}
+                    <p>You are logged in, which means that you already know what is all about.</p>
+                {% else %}
+                    <h3 class="w-100 center">P.S.S.</h3>
+                    <p>
+                        This is a "Player Support System",
+                        it is designed for helping gambler with analysis of events.
+                    </p>
+                    <p>
+                        How it is working? Simply, you browsing stats on statistics portal and you have
+                        turned on our software. So we will retrieve statistics you visited. And don't worry
+                        we will get only things which are important statistically. None of the private stuff
+                        won't be transmitted to us. :)
+                        <span style="font-size:larger;font-weight:400;">You can image new analysis to calculated by our software and propose it to us.
+                        Then we consider it and response. :)
+                        </span>
+                    </p>
+                    <p>
+                        Current version is not configured to provide data by others. First reason is because
+                        a network traffic of that app can be huge. And this is no ethical approach for Mikr.us platform,
+                        which is currently use to hosting this and presentation.
+                        So for now only <i>krystofair</i> have a access to load new data.
+                    </p>
+                    <p>
+                        <a href="#" data-bs-toggle="modal" data-bs-target="#readmoreModal">Read more...</a>
+                    </p>
+                    {% if info %}
+                        <p class="info {% if error %}error{%endif%}">
+                            {{ info }}
+                        </p>
+                    {% endif %}
+                    <div> {# This is "DIV", because of https://stackoverflow.com/questions/21084870/how-to-resolve-no-p-element-in-scope-but-a-p-end-tag-seen-error-in-w3c-validat #}
+                        <p> You are not logged in - </p>
+                        <div class="btn btn-primary w-25" data-bs-toggle="modal" data-bs-target="#loginModal">
+                            Log in
+                        </div>
+                    </div>
+                    <div>
+                        <h6>Small presentation, with internals too.</h6>
+                        <p class="small">Iframe with presentation here.</p>
+                        {# <iframe src="https://player.vimeo.com/video/744365240?title=0&amp;byline=0&amp;portrait=0&amp;badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479" frameborder="0" allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media" title="PG typerka">
+                        </iframe> #}
+                    </div>
+                {% endif %}
+            {% endif %} <!-- End If of lang version. -->
+        </div>
+    </main>
 {% endblock %}

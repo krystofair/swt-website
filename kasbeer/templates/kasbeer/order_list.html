@@ -1,19 +1,41 @@
 {% extends 'kasbeer/base-site.html' %}
 
-{% block title %} Lista zamowien {% endblock %}
+{% block card_title %} History {% endblock %}
 
-{% block header %}
-    <div class="view-title w-100 card-header">
-        <a href="/">SWT</a>
-        <b> twoje badania </b>
+{% block title %}Orders history{% endblock %}
+
+
+{% block template %}
+    <div class="container min-h-75">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Created at</th>
+                    <th>Summary</th>
+                    <th>Completed?</th>
+                    <th>Show Result</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for order in orders %}
+                <tr>
+                    <td> {{ order.created_at.__format__("%d-%m-%Y @ %H:%M") }} </td>
+                    <td> {{ order.summary }} </td>
+                    <td>
+                        {% if order.complete %}
+                            YES
+                        {% else %}
+                            NO
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="/kasbeer/results/{{ order.id }}">
+                            <div class="btn">Result</div>
+                        </a>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
     </div>
-{% endblock header %}
-
-
-{% block content %}
-    <ul>
-    {% for order in orders %}
-        <li><a href="/results/{{ order.id }}"> {{ order }} </a></li>
-    {% endfor %}
-    </ul>
-{% endblock content %}
+{% endblock template %}
