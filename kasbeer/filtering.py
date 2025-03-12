@@ -221,8 +221,8 @@ class FilteringForm(FilterUtilMixin, forms.Form):
     all_countries = wh.Names.list_countries()
     choices = [(c, c.title()) for c in all_countries]
     self._df('country').choices = choices
-    self._df('country').initial = all_countries[0]
-    return all_countries[0]
+    self._df('country').initial = all_countries[0] if all_countries else EMPTY_CHOICE[0]
+    return self._df('country').initial
 
   def init_league(self, country):
     try:
