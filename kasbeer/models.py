@@ -148,6 +148,7 @@ class Order(models.Model):
         m2_api.plan(self)
       except TimeoutError as e:
         self.log.error("Order saved, but {}".format(str(e)))
+        raise ValueError("Something goes wrong, notify admin.")
 
   def save_as_draft(self):
     """For action to save order for later as a draft, cause user don't see checkbox with [x]draft."""

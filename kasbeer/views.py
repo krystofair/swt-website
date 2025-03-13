@@ -86,24 +86,41 @@ class OrderCreation(TemplateView):
   def get_context_data(self, **kwargs):
     return super().get_context_data(**kwargs)
 
-  def get(self, request, *args, **kwargs):
+  def get(self, request, action=None, **kwargs):
     ctx = {}
     if request.GET.dict():
       form = FilteringForm(request, request.GET)
     else:
       form = FilteringForm(request)
     ctx['form'] = form
-    if form.is_valid():
-      #: Find all matches from filters - call API
-      matches = form.search()
-      mform = MatchFormSet(games=matches)
-      ctx |= {'matches': mform}
+    match action:
+      case 'games':
+        logger.info("action=games in GET method")
+        model = wh.Matches.LeagueMatch
+        api = wh.Matches(model)
+        order = self.get_order_by_session(request)
+        events = api.by_ids([m.identifier for m in order.matches])
+        games = list()
+        for match in order.matches:
+          for event in events:
+            if event['match_id'] == match.identifier:
+              games.append( dict(event) | {'weight': match.weight} )
+        mform = MatchFormSet(games=games)
+        ctx |= {'matches': mform}
+      case 'search':
+        if form.is_valid():
+          #: Find all matches from filters - call API
+          matches = form.search()
+          mform = MatchFormSet(games=matches)
+          ctx |= {'matches': mform}
+      case _:
+        pass
     ctx |= self.get_context_data(**ctx)
     resp = render(request, template_name=self.template_name,
                   using=self.template_engine, context=ctx)
     return resp
 
-  def post(self, request, action, *args, **kwargs):
+  def post(self, request, action, **kwargs):
     ctx = {}
     try:
       match action:

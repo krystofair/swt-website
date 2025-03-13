@@ -17,14 +17,18 @@ class MatchEntryField(forms.MultiValueField):
   DEFAULT_WEIGHT = 1.0
 
   def __init__(self, game=None, stats=None, **kwargs):
-    if game:
-      #: unpack as in order of SimpleMatch tuple
+    try:
+      #: unpack as in order of SimpleMatch to validate order.
       mid, hm, aw, hmscr, awscr, *_ = game.values()
       if hmscr != game['home_score'] or mid != game['match_id']:
         raise ValueError("Getting values from match_object didn't keep order,"
                          " TODO: reimplemented.")
-      INITIAL = Match(identifier=mid, weight=MatchEntryField.DEFAULT_WEIGHT)
-
+      weight = game.get('weight', MatchEntryField.DEFAULT_WEIGHT)
+      INITIAL = Match(identifier=mid, weight=weight)
+    except AttributeError:
+      logger.info("Game is NoneType and doesn't have attribute `values`.")
+    #: (min|max)_value are for validation and are in two places.
+    #  So if you want to change it, you should go to widget html file too.
     fields = (
       forms.BooleanField(required=False,
                          widget=MatchEntryCheckbox(self.summary(game))),
@@ -64,7 +68,7 @@ class MatchEntryField(forms.MultiValueField):
     return self.compress(value)
 
   def compress(self, data_list):
-    """Get identifier and weight of match."""
+    """Build Match object."""
     logger.debug(f"compress({data_list})")
     ident = data_list[1]
     weight = data_list[2]

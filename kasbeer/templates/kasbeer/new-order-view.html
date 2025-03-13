@@ -5,7 +5,7 @@
     <div id="match-filtering" class="k3 card-tertiary">
         <div class="card-header">Search</div>
         <div class="card-body">
-            <form method="get">
+            <form method="get" action="/kasbeer/order/search">
                     {{ form.as_div() }}
                 <button class="btn btn-primary w-100 m-t-3" type="submit">
                     Search
@@ -27,7 +27,7 @@
     <div id="other-actions" class="ky card-tertiary">
         <div class="card-header">Actions</div>
         <div class="card-body">
-            <div class="btn btn-secondary w-100 disabled">Show chosen events</div>
+            <a href="/kasbeer/order/games"><div class="btn btn-secondary w-100">Show chosen games</div></a>
             <div class="btn btn-secondary w-100 disabled">Select analysis</div>
             <div id='accept_current_selections-btn'
                 class="btn btn-secondary w-100"
