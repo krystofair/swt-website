@@ -42,7 +42,7 @@ class ResultService:
         errors = list()
         for job in jobs:
             if job.error or job.result is None:
-              errors.append(ErrorResult(job, msg="Analiza jeszcze nie obliczona"))
+              errors.append(ErrorResult(job, msg="Analysis hasn't calculated yet."))
               continue
             ResultClass = cls._select(job)
             # TODO: ResultClass never should be None in real situation,
@@ -66,7 +66,7 @@ class ResultService:
                 errors.append(ErrorResult(job, msg=e))
             except Exception as e:
                 logger.exception(e)
-                errors.append(ErrorResult(job, msg="Wystapily inne bledy, powiadom admina."))
+                errors.append(ErrorResult(job, msg="There were some errors, Please notify admin."))
         return results, errors
 
 
@@ -149,7 +149,7 @@ class CornersLinesResult2(Result):
         plot.add_serie(
             "diff_abs", self.dataframe.columns, list(self.dataframe.loc["diff_abs", :])
         )
-        return {"stackbar plot": plot.apex()}
+        return {"corners lines weighted": plot.apex()}
 
 @sign_for(tasks.correlation_rate_on_off_to_result)
 class TeamScoringOnPieChart(Result):
@@ -164,4 +164,4 @@ class TeamScoringOnPieChart(Result):
         plot.add_serie("punkty", newd.keys(), newd.values())
         # plot.fill_whole_pie(points_dict)
         logger.debug(plot.apex())
-        return {'korelacja strzaly-wynik': plot.apex()}
+        return {'shoots-result correlation': plot.apex()}

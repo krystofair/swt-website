@@ -96,7 +96,8 @@
     $(document).ready(function() {
         $('select[name="chart"]').change(function() {
             $('.plot').removeClass('active');
-            let plotIdSelector = '#' + $(this).val().replace(' ', '-');
+            let plotIdSelector = '#' + $(this).val().replaceAll(' ', '-');
+            console.debug(plotIdSelector)
             $(plotIdSelector).addClass('active');
         });
     });
