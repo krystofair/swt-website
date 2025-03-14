@@ -37,7 +37,7 @@ if SECRET_KEY is None:
                 #: Pull out from line and convert to string to eliminate '' or "".
                 var, value = list(map(str, line.split('=')))
                 # print(f"{var=}, {value=}")
-                os.environ[var] = value  # here we go.
+                os.environ[var] = value.strip("'\"")  # here we go.
             except ValueError:
                 pass
     SECRET_KEY = os.environ.get('secret_key', None)
