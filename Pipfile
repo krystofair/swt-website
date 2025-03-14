@@ -11,6 +11,8 @@ pandas = "*"
 gunicorn = "*"
 aleksander = {path = "/d/aleksander"}
 django-guardian = "*"
+gunicorn = "*"
+
 
 [dev-packages]
 spyder-kernels = "3.0.*"
