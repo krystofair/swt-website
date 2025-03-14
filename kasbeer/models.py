@@ -4,8 +4,6 @@ from django.contrib.auth.models import User
 from django.contrib.sessions.models import Session
 import pandas
 import attrs
-from rest_framework import routers, serializers, viewsets
-from singleton.singleton import Singleton
 try:
   import orjson as jsonlib
 except:

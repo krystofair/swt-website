@@ -65,7 +65,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'rest_framework',
     'guardian',
     'warehouse',
     'm2',
@@ -84,13 +83,13 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'tutu.urls'
 
-REST_FRAMEWORK = {
-    # Use Django's standard `django.contrib.auth` permissions,
-    # or allow read-only access for unauthenticated users.
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
-    ]
-}
+# REST_FRAMEWORK = {
+#     # Use Django's standard `django.contrib.auth` permissions,
+#     # or allow read-only access for unauthenticated users.
+#     'DEFAULT_PERMISSION_CLASSES': [
+#         'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
+#     ]
+# }
 
 KASBEER_TEMPLATES = os.path.join(BASE_DIR, 'kasbeer', 'templates')
 M2_TEMPLATES = os.path.join(BASE_DIR, 'm2', 'templates')

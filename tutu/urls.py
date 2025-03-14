@@ -16,7 +16,6 @@ Including another URLconf
 """
 from django.urls import path, include, re_path
 from django.contrib import admin
-from rest_framework import routers, serializers, viewsets
 
 from functools import partial
 
