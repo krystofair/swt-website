@@ -18,22 +18,42 @@ from django.conf.global_settings import FORM_RENDERER
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-lwbcux-wd!--6ta253&^s^8rka1&l*$187s30dvh%1wh_&ixt7'
+SECRET_KEY = os.environ.get('secret_key', None)
+
+#: Load variable from environment file of your own, when no supervisor loaded it
+if SECRET_KEY is None:
+    environment_file = os.environ['ENV_FILE']
+    with open(environment_file, 'r', encoding='utf-8') as configuration:
+        lines = configuration.read().splitlines()
+        for line in lines:
+            if line.startswith('#') or line.startswith(';') or not line.strip():
+                #: Skip comments and empty lines
+                continue
+            try:
+                #: Pull out from line and convert to string to eliminate '' or "".
+                var, value = list(map(str, line.split('=')))
+                # print(f"{var=}, {value=}")
+                os.environ[var] = value  # here we go.
+            except ValueError:
+                pass
+    SECRET_KEY = os.environ.get('secret_key', None)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+#: debug default as False, so PROD will not be affected by accidentially forget set up
+debug = os.environ.get('debug', False)
+DEBUG = True if debug in ['on', 'true', 'yes', 'y', '1', 'True'] else False
 
-ALLOWED_HOSTS = ['*']
+allowed_hosts = '*' if DEBUG else os.environ.get('allowed_hosts', 'localhost 127.0.0.1 [::]')
+ALLOWED_HOSTS = allowed_hosts.split(' ')
 
 
-# ALEKSANDER_CONFIG_DIR = 'D:\\analityk\\configs'
-ALEKSANDER_CONFIG_DIR = "/d/analityk/configs"
-os.environ['ALEKSANDER_CONFIG_DIR'] = ALEKSANDER_CONFIG_DIR
+ALEKSANDER_CONFIG_DIR = os.environ.get('ALEKSANDER_CONFIG_DIR', None)
+#: set under another aliased name in environment for Aleksander.
+#  os.environ['ALEKSANDER_CONFIG_DIR'] = ALEKSANDER_CONFIG_DIR
 
 
 # Application definition
@@ -105,40 +125,25 @@ WSGI_APPLICATION = 'tutu.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+# db configuration from environment with old default used in testing
+# if nothing changed
+db_port = os.environ.get('db_port', '43211')
+db_user = os.environ.get('db_user', 'postgres')
+db_host = os.environ.get('db_host', '127.0.0.1')
+db_name = os.environ.get('db_name', 'postgres')
+db_password = os.environ.get('db_password', '+ob_Dz+yM;Zl2Uj.W1G5')
+
 DATABASES = {
-    'orders_repository': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'ord_repo.sqlite3',
-        'OPTIONS': {
-            "timeout": 20
-        }
-    },
-    'sqlite': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-        'OPTIONS': {
-            "timeout": 20
-        }
-    },
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'postgres',
-        'HOST': '127.0.0.1',
-        'PORT': '43211',
-        'USER': 'postgres',
-        'PASSWORD': '+ob_Dz+yM;Zl2Uj.W1G5',
+        'NAME': db_name,
+        'HOST': db_host,
+        'PORT': db_port,
+        'USER': db_user,
+        'PASSWORD': db_password,
         'CONN_MAX_AGE': 10800,  # 3 hours
-    },
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.mysql',
-    #     'NAME': 'django',
-    #     'HOST': '127.0.0.1',
-    #     'PORT': '3306',
-    #     'USER': 'django_user',
-    #     'PASSWORD': '+ob_Dz+yM;Zl2Uj.W1G5',
-    # }
+    }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -168,9 +173,9 @@ AUTHENTICATION_BACKENDS = (
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
-LANGUAGE_CODE = 'pl-pl'
+LANGUAGE_CODE = os.environ.get('lang_code', 'en-gb')
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = os.environ.get('time_zone', 'UTC')
 
 USE_I18N = False
 
@@ -180,7 +185,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = os.environ.get('static_url', 'static/')
+STATIC_ROOT = os.environ.get('static_root', '')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -188,5 +194,3 @@ STATIC_URL = 'static/'
 LOGIN_REDIRECT_URL = '/'
 LOGIN_URL = "/"
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-ANALYSIS_SINK_PATH = ('/d/analityk/abuilda/abuilda/results'
-                     '/{timestamp}/{name}.csv')
