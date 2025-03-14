@@ -8,12 +8,11 @@ django = "*"
 django-rest-framework = "*"
 attrs = "*"
 pandas = "*"
-singleton = "*"
+gunicorn = "*"
 aleksander = {path = "/d/aleksander"}
 django-guardian = "*"
 
 [dev-packages]
-; djlint = "*"
 spyder-kernels = "3.0.*"
 black = "*"
 
