@@ -50,6 +50,8 @@ DEBUG = True if debug in ['on', 'true', 'yes', 'y', '1', 'True'] else False
 allowed_hosts = '*' if DEBUG else os.environ.get('allowed_hosts', 'localhost 127.0.0.1 [::]')
 ALLOWED_HOSTS = allowed_hosts.split(' ')
 
+trusted_origins = os.environ.get('trusted_origins', 'http://localhost http://[::]')
+CSRF_TRUSTED_ORIGINS = trusted_origins.split(' ')
 
 ALEKSANDER_CONFIG_DIR = os.environ.get('ALEKSANDER_CONFIG_DIR', None)
 #: set under another aliased name in environment for Aleksander.

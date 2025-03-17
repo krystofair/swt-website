@@ -78,7 +78,7 @@ class Process(mp.Process):
   """
       Engine process to do "black" job.
   """
-  PROCESS_LOG_FILE = "./m2engine.log"
+  PROCESS_LOG_FILE = "./logs/m2engine.log"
 
   def __init__(self, queue, pool_size=1, **kwargs):
     daemon = kwargs.pop('daemon', True)
