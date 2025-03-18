@@ -6,6 +6,7 @@
 from django import forms
 from django.forms import HiddenInput, Select
 from django.utils import choices
+from slugify import slugify
 
 from functools import partial, cached_property, lru_cache
 import logging
@@ -102,7 +103,7 @@ class FilterUtilMixin:
     #  to field name.
     if teamC:
       """ update team's games by part of text from team input (LIKE) """
-      ctx.update(matches = Promise(matches_api.by_team, team))
+      ctx.update(matches = Promise(matches_api.by_team, slugify(team)))
     else:
       if countryC and leagueC:
         ctx.update(matches=Promise(matches_api.by_tournament, tournament))
