@@ -40,6 +40,8 @@ class Order(models.Model):
     super().__init__(*args, **kwargs)
     self._jobs = list()
     self._matches = list()
+    #: Small property to store position at order is in queue when planned.
+    self.queued_at = -1
     self.log = logging.getLogger("orders")
 
   @property
@@ -143,10 +145,10 @@ class Order(models.Model):
     if not self.draft:
       #: Use M2 app for plan processing order.
       try:
-        m2_api.plan(self)
+        self.queued_at = m2_api.plan(self)
       except TimeoutError as e:
         self.log.error("Order saved, but {}".format(str(e)))
-        raise ValueError("Something goes wrong, notify admin.")
+        raise ValueError("When order was scheduled to calculate error occured.")
 
   def save_as_draft(self):
     """For action to save order for later as a draft, cause user don't see checkbox with [x]draft."""

@@ -22,7 +22,7 @@ class Engine():
   _instance = None
 
   def __new__(cls, *args, **kwargs):
-    """ For being singleton"""
+    """For being singleton"""
     if cls._instance:
       return cls._instance
     return super().__new__(cls, *args, **kwargs)
@@ -55,18 +55,28 @@ class Engine():
     
   
   def enqueue(self, order):
-    """Put order to queue for future processing."""
+    """
+      Put order to queue for future processing.
+      Arguments:
+        order: The order to plan processing asynchronically by detached
+               process.
+      Returns:
+        -1 when something goes wrong else position at queue the order was.
+    """
     self = self.instance
     try:
       #: Don't process drafts.
       if order and order.draft:
         return
       self._health_check_process()
+      position_at_queue = self.queue.qsize() + 1
       self.queue.put(order.id)
-      self.log.info("New order(its id) on queue: {order}".format(order=order))
+      self.log.info(f"New order {order}; queued at {position_at_queue}.")
+      return position_at_queue
     except KeyError:
       # never raised.
       self.log.error(f"Did not enqueue order, because there is no order. Receive those: {kwargs=}")
+    return -1
   
   def _health_check_process(self):
     self = self.instance
@@ -76,7 +86,7 @@ class Engine():
 
 class Process(mp.Process):
   """
-      Engine process to do "black" job.
+    Engine process to do "black" job.
   """
   PROCESS_LOG_FILE = "./logs/m2engine.log"
 
@@ -126,9 +136,9 @@ class Process(mp.Process):
 
   def process_order(self, order):
     """
-        Process single order, which was received from queue.
-        So many questions here, is it possible to save job like normal in django in another process?
-        TODO: Change it. - now, pool is not used here.
+      Process single order, which was received from queue.
+      So many questions here, is it possible to save job like normal in django in another process?
+      TODO: Change it. - now, pool is not used here.
     """
     log = self.logger
     #: Order is None case occurs when there was intent

@@ -19,8 +19,6 @@
             {% if polish_version %}
                 {% if request.user.is_authenticated %}
                     <p>Jesteś zalogowany, co oznacza, że już wiesz co i jak.</p>
-                    <a href="/kasbeer/"><div class="btn-primary">Nowe badanie</div></a>
-
                 {% else %}
                     <h3 class="w-100 center">S.W.T.</h3>
                     <p>To system wspomagania typera w codziennych obowiązkach XD</p>
@@ -43,6 +41,12 @@
             {% else %} {# English version #}
                 {% if request.user.is_authenticated %}
                     <p>You are logged in, which means that you already know what is all about.</p>
+                    {# This can be as message from messages framework #}
+                    {% if info %}
+                        <p class="info {% if error %}error{%endif%}">
+                            {{ info }}
+                        </p>
+                    {% endif %}
                 {% else %}
                     <h3 class="w-100 center">P.S.S.</h3>
                     <p>

@@ -127,15 +127,24 @@ class OrderCreation(TemplateView):
         case 'analyses': ctx |= self._add_analyses_action(request)
         case 'games': ctx |= self._add_matches_action(request)
         case 'accept': 
-          self._commit_order_action(request)
-          return redirect('orders')
+          kwargs = self._commit_order_action(request, queued_at=-1)
+          if (position := kwargs.get('queued_at')) > 0:
+            ctx.update(info = f"You are {position} in queue to do calculation.")
+          else:
+            ctx.update(info=f"Order not scheduled to calculate, notify admin.",
+                       error=True)
+          return index(request, ctx=ctx)
       ctx |= super().get_context_data()
       ctx.update(form=FilteringForm(request))
       return render(request, template_name=self.template_name,
                     using=self.template_engine, context=ctx)
     except ValueError as e:
+      if "scheduled" in str(e).lower():
+        ctx.update(info=str(e), error=True) #  + " You can try reschedule it from history.")
+      else:
+        ctx.update(info="Some error occured. Notify admin.", error=True)
       logger.exception(e)
-      return index(request, ctx={"info": "Account not exists or you enter wrong credentials."})
+      return index(request, ctx=ctx)
 
   def get_order_by_session(self, request):
     """Retrieve or create (not commited) new order for session"""
@@ -181,6 +190,7 @@ class OrderCreation(TemplateView):
     # try:
     order.user = request.user
     order.save()
+    kwargs.update(queued_at = order.queued_at)
     logger.info(f"Order created at {order.created_at} for user {request.user}")
     del self._orders[request.session.session_key]
     # except ValueError as e:

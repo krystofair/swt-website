@@ -20,4 +20,4 @@ def weight(match_id):
 
 def plan(order):
   """Plan order to processing."""
-  m2_app.engine.enqueue(order)
+  return m2_app.engine.enqueue(order)
