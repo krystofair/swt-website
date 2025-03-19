@@ -11,7 +11,7 @@
 {% block stylesheets %}
     {{ super() }}
     <link rel="stylesheet" href="{{ static('apexcharts.js-4.5.0/dist/apexcharts.css') }}">
-    <link rel="stylesheet" href="{{ static('m2/custom.css') }}">
+    <link rel="stylesheet" href="{{ static('m2/base.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -20,11 +20,11 @@
         <div class="modal fade" id="errorModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
-                <div class="modal-header">
+                <div class="modal-header card-header">
                     <h1 class="modal-title fs-5">Errors occured during calculations.</h1>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body card-body">
                     {% for err in errors %}
                         <div>
                             <h5>{{ err.analysis }}</h5>
@@ -32,7 +32,7 @@
                         </div>
                     {% endfor %}
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer card-body">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zamknij</button>
                 </div>
                 </div>

@@ -13,6 +13,9 @@
 .active {
     display: block;
 }
+div#errorModal div.modal-header {
+    background-color: var(--primary);
+}
 
 /* * {
     margin: 1px;
