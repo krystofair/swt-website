@@ -30,3 +30,27 @@ function change_game_callback(event) {
         form_total_forms.value = parseInt(form_total_forms.value) - 1;
     }
 }
+
+function change_country_callback(event) {
+    $('#filtering-league-select').empty();
+    let self = event.target;
+    console.debug("Country change ajax for league from this country.")
+    $.ajax({
+        url: '/kasbeer/filtering/leagues/?country=' + self.value,
+        type: 'GET',
+        success: function(data) {
+            if (Array.isArray(data)) {
+                data.forEach(function(item) {
+                    var option = $('<option>', {
+                        value: item[0],
+                        text: item[1]
+                    });
+                    $('#filtering-league-select').append(option);
+                });
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error fetching data: ', error);
+        }
+    });
+}

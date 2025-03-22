@@ -1,22 +1,28 @@
 """
     Module for serving functionality about listing matches by specific
-    criterion.
+    criterion. Do not importing this by other module than forms.
 """
 
 from django import forms
 from django.forms import HiddenInput, Select
 from django.utils import choices
+from django.core.exceptions import ValidationError
 from slugify import slugify
 
 from functools import partial, cached_property, lru_cache
 import logging
+from datetime import datetime
 
 import warehouse.views as wh
 
 logger = logging.getLogger(__name__)
 
 
-EMPTY_CHOICE = [("", "?")]
+EMPTY_CHOICE = [("", "---")]
+
+def _opt_text(value):
+  """Prepare value as it should be visible to user."""
+  return value.title().replace('-', ' ')
 
 Promise = partial
 """
@@ -25,57 +31,112 @@ Promise = partial
     be able to run logic query composition, etc and after then queries database.
 """
 
-class DynamicChoiceField(forms.ChoiceField):
+class FilteringHelper:
 
-  def __init__(self, *args, **kwargs):
-    super().__init__(*args, **kwargs)
+  @classmethod
+  def league_choices_validator(cls, value, country):
+    cls._choices_validator(value, cls.league_choices(country))
 
-  def init(self, parent, ref, dataprovider):
-    #: Parent is form which this field belongs to
-    # self.parent = kwargs.pop('parent')
-    self._parent = parent
-    #: This is reference of value that choices depends
-    # self.field_ref = kwargs.pop('field_ref')
-    self._field_ref = ref  # self._conv_to_list(ref)
-    #: And dataprovider is function for getting new choices
-    # self.dataprovider = kwargs.pop('data_fun')
-    self._data_provider = dataprovider
+  @lru_cache()
+  @staticmethod
+  def country_choices():
+    """Returns list of countries as choices from Data API."""
+    return EMPTY_CHOICE + [(c, _opt_text(c)) for c in wh.Names.list_countries()]
 
-  # def _conv_to_list(self, value):
-  #   """Helper for convert value as list of parameters"""
-  #   try:
-  #     if (not isinstance(value, tuple)
-  #         and not isinstance(value, typing.MutableSequence)):
-  #       return [value]
-  #     return list(value)
-  #   except:
-  #     logger.warning(f"Cannot convert value {value} as list.")
-  #     raise
+  @staticmethod
+  def league_choices(country):
+    """
+      Returns list of possible choices for league. This should be used in async
+      GET request from GUI, to be consistent.
+    """
+    return (EMPTY_CHOICE +
+            [(l, _opt_text(l)) for l in wh.Names.list_leagues(country)])
 
-  def _get_reference_val(self):
-    """Helper for exactly get value the choices are built on."""
-    logger.debug("Try get value(s) from field reference.")
-    return self._parent.data[self._field_ref]
+  @staticmethod
+  def _choices_validator(value, choices):
+    """Validate value is one of choice from choices."""
+    #: Choices are in format of tuple (x, formatted_x)
+    if value not in [x[0] for x in choices]:
+      raise ValidationError("Not posible choice.")
 
-  @lru_cache(maxsize=40)
-  def _ch(self, reference_value):
-    """Helper to choices for could be beeing cached by dependency value."""
-    logger.debug("Reading choices from data provider.")
-    return self._data_provider(reference_value)
+  @staticmethod
+  def check_slugified_value(value):
+    if slugify(value) != value:
+      raise ValidationError("After slugify value is different.")
 
-  @property
-  def choices(self):
-    ref_vals = self._get_reference_val()
-    return self._ch(ref_val)
+  @staticmethod
+  def team_name_len_validator(value):
+    if len(value) < 3:
+      raise ValidationError("Length of team name should be greater or equal 3.")
 
-  @choices.setter
-  def choices(self, value):
-    super().choices = value
+  @staticmethod
+  def not_empty_after_slugified(value):
+    if not slugify(value):
+      raise ValidationError("Value is wrong.")
 
 
-class FilterUtilMixin:
+class FilteringForm(forms.Form):
+  FOOTBALL_GAME_API_MODEL = wh.Matches.LeagueMatch
 
-  def logic(self, changes):
+  team = forms.CharField(required=False,
+                         validators=(
+                           FilteringHelper.team_name_len_validator,
+                           FilteringHelper.not_empty_after_slugified
+                         )
+  )
+  # XXX: country field should be invalid when is empty, but this
+  #      require changing initial value every time to not took it with
+  #      team filtering then.
+  country = forms.ChoiceField(show_hidden_initial=False,
+                              required=False,
+                              validators=(
+                                FilteringHelper.check_slugified_value,
+                              ),
+                              choices=FilteringHelper.country_choices(),
+                              widget=forms.widgets.Select(
+                                attrs={"onchange": "change_country_callback(event)"}
+                              )
+  )
+  league = forms.ChoiceField(show_hidden_initial=False,
+                             required=False,
+                             widget=forms.widgets.Select(
+                               attrs={"id": "filtering-league-select"},
+                             ),
+                             validators=(
+                               FilteringHelper.check_slugified_value,
+                             )
+  )
+  # season = forms.CharField(show_hidden_initial=False, required=False,
+  #                          widget=forms.widgets.Select, initial=EMPTY_CHOICE)
+  matches_result_promise: Promise = None
+
+  def __init__(self, request, *args, **kwargs):
+    _initial = kwargs.pop('initial', None)
+    if _initial:
+      logger.warning("Passed initial wont be take into account.")
+    initials = { "team": "", "country": "", "league": "" }
+    super().__init__(*args, initial=initials, **kwargs)
+    if self.is_bound and self.has_changed():
+      ctx = self.logic(self.changed_data)
+      self.matches_result_promise = ctx.get("matches", None)
+      self.leagues = ctx.get('leagues', EMPTY_CHOICE)
+      self.declared_fields['league'].choices = self.leagues
+
+  def clean(self):
+    """
+      Extra validation for league, because this field require information
+      about `country`.
+    """
+    try:
+      if not self.has_error("country"):
+        FilteringHelper.league_choices_validator(
+          self.cleaned_data['league'], self.cleaned_data['country']
+        )
+    except:
+      pass
+    return super().clean()
+
+  def logic(self, changes, model=FOOTBALL_GAME_API_MODEL):
     """
         With passed changes this calculate what should be exactly updated.
         And add it to context dictionary.
@@ -84,165 +145,53 @@ class FilterUtilMixin:
         Returns:
           Promise = partial for data which should be collected from API (warehouse).
     """
-    matches_api = wh.Matches(wh.Matches.LeagueMatch)
+    matches_api = wh.Matches(model)
+    is_changed = lambda x: x in changes
     ctx = dict()
-    in_ = lambda x: x in changes
-    # data pull out
-    team = self.data.get('team', '')
+    #: get data from form
+    team = slugify(self.data.get('team', ''))
     league = self.data.get('league', '')
-    season = self.data.get('season', '')
     country = self.data.get('country', '')
     tournament = (league, country)
-    # conditions
-    leagueC = in_('league')
-    countryC = in_('country')
-    seasonC = in_('season')
-    teamC = in_('team')
+    #: what was changed
+    leagueC = is_changed('league')
+    countryC = is_changed('country')
+    teamC = is_changed('team')
+    #: decision which api to use for match searching
+    if teamC and countryC and leagueC:
+      ctx.update(
+        matches=Promise(matches_api.by_team_in_tournament, team, (league, country)),
+        leagues=FilteringHelper.league_choices(country)
+      )
+    elif teamC and countryC:
+      ctx.update(
+        matches=Promise(matches_api.by_team_from_country, team, country),
+        leagues=FilteringHelper.league_choices(country)
+      )
     #: Names of league, country, season are in singular for because of
     #  do things smoothly in `update` method, where key autmatically match
     #  to field name.
-    if teamC:
+    elif teamC:
       """ update team's games by part of text from team input (LIKE) """
-      ctx.update(matches = Promise(matches_api.by_team, slugify(team)))
+      ctx.update(matches=Promise(matches_api.by_team, team))
     else:
       if countryC and leagueC:
-        ctx.update(matches=Promise(matches_api.by_tournament, tournament))
-        ctx.update(season=Promise(self._S, *tournament))
-        ctx.update(league=Promise(self._L, country))
+        ctx.update(
+          matches=Promise(matches_api.by_tournament, tournament),
+          leagues=FilteringHelper.league_choices(country)
+        )
       elif countryC:
-        """ Update leagues from this country without updating games """
-        ctx.update(league = Promise(self._L, country))
-        ctx.update(country = Promise(self._C))
-      elif leagueC:
-        """ Update games from tournament and update seasons for tournament"""
-        ctx.update(matches = Promise(matches_api.by_tournament, tournament))
-        ctx.update(season = Promise(self._S, *tournament))
-        ctx.update(league = Promise(self._L, country))
-      elif seasonC:
-        """ Update games from specified season in selected tournament """
-        ctx.update(matches = Promise(matches_api.by_season_of_tournament, (season, tournament)))
-        ctx.update(season = Promise(self._S, *tournament))
+        ctx.update(
+          leagues=FilteringHelper.league_choices(country)
+        )
     return ctx
-
-
-  def _df(self, name):
-    return self.__class__.declared_fields[name]
-
-  def _boundF(self, x):
-    return self._df(x).get_bound_field(self, x)
-
-  def _L(self, country=None):
-    """
-        Helper method to obtain leagues by country.
-        Take country from own's form, unless passed as arguments.
-    """
-    if not country:
-      country = self.data['country']
-    return EMPTY_CHOICE + [(l, l.title()) for l in wh.Names.list_leagues(country)]
-
-  def _C(self):
-    """Return list of countries as choices from Data API."""
-    return [(c, c.title()) for c in wh.Names.list_countries()]
-
-  def _S(self, league=None, country=None):
-    """
-        Helper about getting list of Seasons by country + league.
-        Normally takes data from own form, but alternatively used passed.
-    """
-    if not league and not country:
-      league = self.data['league'] # self._boundF('league').value()
-      country = self.data['country'] # self._boundF('country').value()
-    return (EMPTY_CHOICE +
-            [(s, s) for s in
-             wh.Names.list_seasons_for_tournament((league, country))]
-    )
-
-  def _recreate_field(self, field, new_choices=None):
-    """
-        Recreate field 'field' with new initial and choices.
-        Initial is for again be able to observable change.
-        Choices are simply new choices which will be rendered on website.
-    """
-    return field.__class__(
-      required=field.required,
-      show_hidden_initial=field.show_hidden_initial,
-      initial=field.initial,
-      choices=new_choices
-    )
-
-class FilteringForm(FilterUtilMixin, forms.Form):
-  team = forms.CharField(required=False)
-  country = forms.ChoiceField(show_hidden_initial=True)
-  league = forms.ChoiceField(show_hidden_initial=True, required=False)
-  season = forms.ChoiceField(show_hidden_initial=True, required=False)
-  matches_result_promise: Promise = None
-  # template_name_div = "kasbeer/filtering.html"
-
-  def __init__(self, request, *args, **kwargs):
-    logger.debug(f"{args=!r},\n\n {kwargs=!r}")
-    super().__init__(*args, **kwargs)
-    if not self.is_bound:
-      c = self.init_country(request.session)
-      l = self.init_league(c)
-      s = self.init_season(l, c)
-      self.initial = {
-        'country': c,
-        'league': l,
-        'season': s
-      }
-    else:
-      self.update()
 
   def search(self):
     """Return filtered matches"""
     if self.matches_result_promise:
-      return self.matches_result_promise()
+      games = sorted(self.matches_result_promise(),
+                     key=lambda x: x.get('when', datetime.now()))
+      games.reverse()
+      return games
     logger.warning("Proxy for matches result not yet loaded.")
     return []
-
-  def update(self):
-    # if self.has_changed():
-    updates = self.logic(self.changed_data)
-    initial_data = {}
-    for field_name, data_promise in updates.items():
-      match field_name:
-        case 'league'|'season'|'country':
-          #: creating new fields
-          field = self._recreate_field(self._df(field_name), data_promise())
-          #: Updating line
-          self.__class__.declared_fields[field_name] = field
-          #: save initial to init whole form.
-          initial_data.update({field_name: self._boundF(field_name).value()})
-        case 'matches':
-          self.matches_result_promise = data_promise
-    self.initial = initial_data
-
-  @lru_cache(maxsize=4)
-  def init_country(self, session):
-    all_countries = wh.Names.list_countries()
-    choices = [(c, c.title()) for c in all_countries]
-    self._df('country').choices = choices
-    self._df('country').initial = all_countries[0] if all_countries else EMPTY_CHOICE[0]
-    return self._df('country').initial
-
-  def init_league(self, country):
-    try:
-      leagues = self._L(country)
-      self._df('league').choices = leagues
-      self._df('league').initial = leagues[0][0]
-    except Exception as e:
-      logger.exception(e)
-      logger.warning("Not update league choices in filtering")
-      return ''
-    return leagues[0][0]
-
-  def init_season(self, league, country):
-    try:
-      seasons = self._S(league, country)
-      self._df('season').choices = seasons
-      self._df('season').initial = seasons[0][0]
-    except Exception as e:
-      logger.exception(e)
-      logger.warning("Not update season choices in filtering")
-      return ''
-    return seasons[0][0]

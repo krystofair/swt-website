@@ -8,10 +8,10 @@ import functools
 import itertools
 import logging
 
-from .models import Match
-from . import widgets as kasbeer_widgets
+from kasbeer.models import Match
+from kasbeer import widgets as kasbeer_widgets
 import warehouse.views as wh
-from .filtering import FilteringForm
+from kasbeer.filtering import FilteringForm
 
 logger = logging.getLogger(__name__)
 

@@ -21,7 +21,10 @@ import logging
 #: API for names .
 import warehouse.views as wh
 from kasbeer.forms import (
-  MatchInlineEntryForm, FilteringForm, MatchFormSet, CommitOrderForm
+  MatchInlineEntryForm,
+  FilteringForm,
+  MatchFormSet,
+  CommitOrderForm
 )
 from kasbeer import models
 import m2.views
@@ -74,6 +77,12 @@ def index(request, **kwargs):
   return render(request, template_name="kasbeer/index.html", using='jinja2',
                 context=kwargs.get('ctx', {}))
 
+@login_required
+def list_league_by_country(request):
+  form = FilteringForm(request, request.GET)
+  if form.is_valid() and form.has_changed():
+    return JsonResponse(form.leagues, safe=False)
+  return JsonResponse([], safe=False)
 
 @method_decorator(login_required, name='dispatch')
 class OrderCreation(TemplateView):

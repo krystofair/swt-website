@@ -1,0 +1,4 @@
+#match-filtering .card-body form div input,
+#match-filtering .card-body form div select {
+    width: 100%;
+}

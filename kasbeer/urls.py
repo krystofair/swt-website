@@ -12,4 +12,5 @@ urlpatterns = [
     path('kasbeer/order/<str:action>', views.OrderCreation.as_view(), name='orderAction'),
     path('kasbeer/orders/', views.list_orders, name='orders'),
     path('kasbeer/results/<int:order_id>/', views.order_result_view, name='orderResult'),
+    path('kasbeer/filtering/leagues/', views.list_league_by_country, name="leaguesByCountry")
 ]

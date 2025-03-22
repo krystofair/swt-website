@@ -62,6 +62,12 @@ class Matches(API):
     query = sa.select(*self.display_set).where(team)
     return API._exe_query(query)
 
+  def by_team_from_country(self, team, country):
+    team = sa.or_(Match.home.like(f"%{team}%"), Match.away.like(f"%{team}%"))
+    team_and_country = sa.and_(team, Match.country == country)
+    query = sa.select(*self.display_set).where(team_and_country)
+    return API._exe_query(query)
+
   def by_team_winner(self, team):
     #: where conditions
     home_winner = sa.and_(Match.home == team, Match.home_score > Match.away_score)
@@ -84,7 +90,7 @@ class Matches(API):
   def by_team_in_tournament(self, team, tournament):
     league, country = tournament
     #: conditions
-    team = sa.or_(Match.home == team, Match.away == team)
+    team = sa.or_(Match.home.like(f"%{team}%"), Match.away.like(f"%{team}%"))
     league_and_country = sa.and_(Match.league == league, Match.country == country)
     team_and_tournament = sa.and_(team, league_and_country)
     q = sa.select(*self.display_set).where(team_and_tournament)

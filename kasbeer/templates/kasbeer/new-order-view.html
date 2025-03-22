@@ -1,15 +1,44 @@
 {% extends 'kasbeer/kasbeer-base.html' %}
+
+{% block stylesheets %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ static('kasbeer/css/filteringform.css') }}">
+{% endblock %}
+
 {% block card_title %} Order creation {% endblock %}
+
+{% include 'kasbeer/search-info-modal.html' %}
 
 {% block sidebar %}
     <div id="match-filtering" class="k3 card-tertiary">
-        <div class="card-header">Search</div>
+        <div class="card-header">
+            Search <a class="fs-6" data-bs-toggle="modal" data-bs-target="#search-help-modal">ℹ️</a>
+        </div>
         <div class="card-body">
             <form method="get" action="/kasbeer/order/search">
                     {{ form.as_div() }}
-                <button class="btn btn-primary w-100 m-t-3" type="submit">
-                    Search
-                </button>
+                    {# <div>
+                        <label for="id_team">Team:</label>
+                        <input type="text" name="team" id="id_team">
+                    </div>
+                    <div>
+                        <label for="id_country">Country:</label>
+                        <select name="country" id="id_country">
+                        </select>
+                    </div>
+                    <div>
+                        <label for="id_league">League:</label>
+                        <select name="league" id="id_league">
+                        </select>
+                    </div> #}
+                <div class="w-100">
+                    <button class="btn btn-primary w-100 m-t-3" type="submit">
+                        Search
+                    </button>
+                    {# <button class="d-inline btn btn-secondary w-50 m-t-3" type="reset">
+                        Reset
+                    </button> #}
+                </div>
             </form>
         </div>
     </div>
