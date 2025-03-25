@@ -7,8 +7,6 @@
 
 {% block card_title %} Order creation {% endblock %}
 
-{% include 'kasbeer/search-info-modal.html' %}
-
 {% block sidebar %}
     <div id="match-filtering" class="k3 card-tertiary">
         <div class="card-header">
@@ -70,6 +68,7 @@
 {% endblock header %}
 
 {% block content %}
+    {% include 'kasbeer/search-info-modal.html' %}
     <form name="match_list" method="post">
         <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
         <input id="match_list_chosen_count" type="hidden" name="form-TOTAL_FORMS" value="0">
