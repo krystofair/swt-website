@@ -81,6 +81,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'kasbeer.orders.OrderRepositoryMiddleware'
 ]
 
 ROOT_URLCONF = 'tutu.urls'
@@ -195,3 +196,6 @@ STATIC_ROOT = os.environ.get('static_root', '')
 LOGIN_REDIRECT_URL = '/'
 LOGIN_URL = "/"
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+#: Left for maybe in future version to use REDIS as a backend.
+# ORDER_REPO_REDIS_CACHE_HOST = os.environ.get('redis_cache_host', 'localhost')
+# ORDER_REPO_REDIS_CACHE_PORT = os.environ.get('redis_cache_port', '4602')

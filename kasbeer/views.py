@@ -27,6 +27,7 @@ from kasbeer.forms import (
   CommitOrderForm
 )
 from kasbeer import models
+from kasbeer import orders
 import m2.views
 
 
@@ -89,7 +90,7 @@ class OrderCreation(TemplateView):
   template_name = "kasbeer/new-order-view.html"
   template_engine = 'jinja2'
   title = "Tworzenie zamówienia"
-  _orders = dict()
+  # _orders = dict()
   # form = FilteringForm()
 
   def get_context_data(self, **kwargs):
@@ -107,7 +108,7 @@ class OrderCreation(TemplateView):
         logger.info("action=games in GET method")
         model = wh.Matches.LeagueMatch
         api = wh.Matches(model)
-        order = self.get_order_by_session(request)
+        order = request.kasbeer_order
         events = api.by_ids([m.identifier for m in order.matches])
         games = list()
         for match in order.matches:
@@ -155,23 +156,13 @@ class OrderCreation(TemplateView):
       logger.exception(e)
       return index(request, ctx=ctx)
 
-  def get_order_by_session(self, request):
-    """Retrieve or create (not commited) new order for session"""
-    # FIXME: If creating order won't end with ultimate phase (to calculate) then we will have memory leak :)
-    try:
-      order = self._orders[request.session.session_key]
-    except KeyError:  # order jeszcze nie istnieje
-      order = models.Order(draft=False)
-    self._orders[request.session.session_key] = order
-    return order
-
   def _add_analyses_action(self, request, **kwargs):
     """ Add analysis to order which you want to calculate """
     return {}
 
   def _add_matches_action(self, request, **kwargs):
     #: Pobierz mecze z formularza po zatwierdzeniu
-    order = self.get_order_by_session(request)
+    order = request.kasbeer_order
     formset = MatchFormSet(request.POST)
     if formset.is_valid():
       for match_form in formset:
@@ -182,7 +173,7 @@ class OrderCreation(TemplateView):
     return kwargs
 
   def _commit_order_action(self, request, **kwargs):
-    order = self.get_order_by_session(request)
+    order = request.kasbeer_order
     order_summary_form = CommitOrderForm(request.POST)
     if order_summary_form.is_valid():
       order.summary = order_summary_form.cleaned_data['summary']
@@ -201,7 +192,7 @@ class OrderCreation(TemplateView):
     order.save()
     kwargs.update(queued_at = order.queued_at)
     logger.info(f"Order created at {order.created_at} for user {request.user}")
-    del self._orders[request.session.session_key]
+    orders.OrderRepository.remove(request.user)
     # except ValueError as e:
     #   try:
     #     order.save_as_draft()
