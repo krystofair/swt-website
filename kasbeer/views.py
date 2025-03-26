@@ -123,6 +123,12 @@ class OrderCreation(TemplateView):
           matches = form.search()
           mform = MatchFormSet(games=matches)
           ctx |= {'matches': mform}
+      case 'reset':
+        logger.debug("delete current order")
+        #: Removing from repository is enough,
+        #: because `orders.OrderRepositoryMiddleware` do the rest!
+        orders.OrderRepository.remove(request.user)
+        return redirect("order")
       case _:
         pass
     ctx |= self.get_context_data(**ctx)

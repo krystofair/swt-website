@@ -47,8 +47,9 @@
                 id="order_summary" class="w-100"
                 placeholder="summary">
         <div id='send_order-btn'
-                class="btn btn-success w-100"
+                class="btn btn-success w-100 m-t-3"
                 onclick="send_order()">Send</div>
+        <a href="/kasbeer/order/reset"><div class="btn btn-danger w-100">Delete current order</div></a>
         </div>
     </div>
     <div id="other-actions" class="ky card-tertiary">
@@ -59,6 +60,7 @@
             <div id='accept_current_selections-btn'
                 class="btn btn-secondary w-100"
                 onclick="add_games()">Add events to order</div>
+
         </div>
     </div>
 {% endblock sidebar %}
