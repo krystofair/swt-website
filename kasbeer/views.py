@@ -60,9 +60,15 @@ def logout(request):
   return redirect('home')
 
 
+@login_required
 def order_result_view(request, order_id, *args, **kwargs) -> View:
   order = models.Order.objects.get(id=order_id)
-  return m2.views.ApexChartView.as_view(order=order)(request)
+  user = request.user
+  if order.user == user:
+    return m2.views.ApexChartView.as_view(order=order)(request)
+  else:
+    ctx = dict(info=f"You are not permissions for that. No admission.", error=True)
+    return index(request, ctx=ctx)
 
 
 @never_cache
