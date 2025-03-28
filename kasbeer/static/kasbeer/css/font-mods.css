@@ -1,0 +1,40 @@
+@font-face {
+    font-family: 'Windows 95';
+    src: url('../fonts/polish_mods_win95.woff2') format('woff2'),
+        url('../fonts/polish_mods_win95.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/**
+ * = Typography
+ *
+ * Below is what is defined in w95.css stylesheet.
+
+ body,
+ h1,
+ h2,
+ h3,
+ h4,
+ h5,
+ h6,
+ .h1,
+ .h2,
+ .h3,
+ .h4,
+ .h5,
+ .h6 {
+     font-family: "Windows 95", sans-serif;
+     font-weight: 400;
+ }
+ 
+ p,
+ ol li,
+ ul li {
+     font-family: "Windows 95", sans-serif;
+     font-size: .6rem;
+     font-weight: 300;
+     line-height: 2;
+ }
+
+**/
