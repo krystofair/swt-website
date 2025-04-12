@@ -323,7 +323,7 @@ def shots_on_target_lines_weighted(matches):
     pframe = pframe.drop(['home', 'away', 'name', 'match_id'], axis=1)
 
     ### badanie linii z ramki pframe
-    lines = np.arange(5.5, 95.5, 1)
+    lines = np.arange(2.5, 40.5, 1)
     over = pd.DataFrame()
     under = over.copy()
 
