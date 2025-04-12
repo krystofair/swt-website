@@ -200,6 +200,150 @@ def analyse_corners_2(matches):
     log.exception(e)
     raise
 
+@set_name("Goals lines weighted")
+def goals_lines_with_weights(matches):
+  """
+  Analiza lini dla ilości bramek w meczach
+  """
+  try:
+    frame_goals_with_stats, errors = wh.Stats.stats_with_goals(['ball-possession'], matches)
+    log.info(frame_goals_with_stats)
+    log.error(errors)
+    #: Build frame from chosen matches
+    matches_df = pd.DataFrame(list(map(_match_as_dict, matches)))
+    scores_frame = frame_goals_with_stats[['home_score', 'away_score', 'match_id']]
+    pframe = matches_df.merge(scores_frame, on="match_id")
+    ### create lines
+    lines = np.arange(0.5, 25.5, 1)
+    over = pd.DataFrame()
+    under = over.copy()
+    for line in lines:
+      over[str(line)] = pframe.loc[(pframe['home_score'] + pframe['away_score']) > line, ['weight']].sum()
+      under[str(line)] = pframe.loc[(pframe['home_score'] + pframe['away_score']) < line, ['weight']].sum()
+    over = over.rename({'weight': 'weight_over'})
+    under = under.rename({'weight': 'weight_under'})
+    total_weight = pframe['weight'].sum()
+    ou = pd.concat([over, under], axis=0)
+    ou.loc['weight_under', :] = ou.loc['weight_under', :].shift(-1)
+    ou.loc['diff_sign', :] = ou.loc['weight_over', :] - ou.loc['weight_under', :]
+    ou.loc['diff_abs', :] = ou.loc['diff_sign', :].abs()
+    ou = ou.loc[:, ou.loc['diff_abs', :] < total_weight]
+    log.info(ou)
+    return ou
+  except Exception as e:
+    log.exception(e)
+    raise
+
+@set_name("Yellow cards lines weighted")
+def yellows_lines_weighted(matches):
+  """
+  Wyznacza zmiany wag pomiędzy kolejnymi liniami dla żółtych kartek.
+  """
+  try:
+    # home | away | match_id | name | weight
+    # ale drop'uję te match_id i name , więc mamy
+    # home | away | weight
+    pframe = common_to_stat_analyses(['yellow-cards'], matches)
+    #: create sum from home and away
+    pframe['total'] = pframe['home'] + pframe['away']
+    pframe = pframe.drop(['home', 'away', 'name', 'match_id'], axis=1)
+
+    ### badanie linii z ramki pframe
+    lines = np.arange(0.5, 15.5, 1)
+    over = pd.DataFrame()
+    under = over.copy()
+
+    for line in lines:
+      over[str(line)] = pframe.loc[pframe['total'] > line, ['weight']].sum()
+      under[str(line)] = pframe.loc[pframe['total'] < line, ['weight']].sum()
+
+    over = over.rename({'weight': 'weight_over'})
+    under = under.rename({'weight': 'weight_under'})
+    total_weight = pframe['weight'].sum()
+    ou = pd.concat([over, under], axis=0)
+    ou.loc['weight_under', :] = ou.loc['weight_under', :].shift(-1)
+    ou.loc['diff_sign', :] = ou.loc['weight_over', :] - ou.loc['weight_under', :]
+    ou.loc['diff_abs', :] = ou.loc['diff_sign', :].abs()
+    ou = ou.loc[:, ou.loc['diff_abs', :] < total_weight]
+    log.info(ou)
+    return ou
+  except Exception as e:
+    log.exception(e)
+    raise
+
+@set_name("Foul lines analysis weighted")
+def foul_lines_weighted(matches):
+  """
+  Wyznacza zmiany wag pomiędzy kolejnymi liniami.
+  """
+  try:
+    # home | away | match_id | name | weight
+    # ale drop'uję te match_id i name , więc mamy
+    # home | away | weight
+    pframe = common_to_stat_analyses(['fouls'], matches)
+    #: create sum from home and away
+    pframe['total'] = pframe['home'] + pframe['away']
+    pframe = pframe.drop(['home', 'away', 'name', 'match_id'], axis=1)
+
+    ### badanie linii z ramki pframe
+    lines = np.arange(5.5, 95.5, 1)
+    over = pd.DataFrame()
+    under = over.copy()
+
+    for line in lines:
+      over[str(line)] = pframe.loc[pframe['total'] > line, ['weight']].sum()
+      under[str(line)] = pframe.loc[pframe['total'] < line, ['weight']].sum()
+
+    over = over.rename({'weight': 'weight_over'})
+    under = under.rename({'weight': 'weight_under'})
+    total_weight = pframe['weight'].sum()
+    ou = pd.concat([over, under], axis=0)
+    ou.loc['weight_under', :] = ou.loc['weight_under', :].shift(-1)
+    ou.loc['diff_sign', :] = ou.loc['weight_over', :] - ou.loc['weight_under', :]
+    ou.loc['diff_abs', :] = ou.loc['diff_sign', :].abs()
+    ou = ou.loc[:, ou.loc['diff_abs', :] < total_weight]
+    log.info(ou)
+    return ou
+  except Exception as e:
+    log.exception(e)
+    raise
+  
+@set_name("Shots_on_target lines analysis weighted")
+def shots_on_target_lines_weighted(matches):
+  """
+  Wyznacza zmiany wag pomiędzy kolejnymi liniami.
+  """
+  try:
+    # home | away | match_id | name | weight
+    # ale drop'uję te match_id i name , więc mamy
+    # home | away | weight
+    pframe = common_to_stat_analyses(['shots-on-target'], matches)
+    #: create sum from home and away
+    pframe['total'] = pframe['home'] + pframe['away']
+    pframe = pframe.drop(['home', 'away', 'name', 'match_id'], axis=1)
+
+    ### badanie linii z ramki pframe
+    lines = np.arange(5.5, 95.5, 1)
+    over = pd.DataFrame()
+    under = over.copy()
+
+    for line in lines:
+      over[str(line)] = pframe.loc[pframe['total'] > line, ['weight']].sum()
+      under[str(line)] = pframe.loc[pframe['total'] < line, ['weight']].sum()
+
+    over = over.rename({'weight': 'weight_over'})
+    under = under.rename({'weight': 'weight_under'})
+    total_weight = pframe['weight'].sum()
+    ou = pd.concat([over, under], axis=0)
+    ou.loc['weight_under', :] = ou.loc['weight_under', :].shift(-1)
+    ou.loc['diff_sign', :] = ou.loc['weight_over', :] - ou.loc['weight_under', :]
+    ou.loc['diff_abs', :] = ou.loc['diff_sign', :].abs()
+    ou = ou.loc[:, ou.loc['diff_abs', :] < total_weight]
+    log.info(ou)
+    return ou
+  except Exception as e:
+    log.exception(e)
+    raise
 
 @set_name("Korelacja posiadania piłki do wyniku meczu")
 def correlation_bp2result(matches):

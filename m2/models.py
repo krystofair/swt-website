@@ -151,6 +151,30 @@ class CornersLinesResult2(Result):
         )
         return {"corners lines weighted": plot.apex()}
 
+@sign_for(tasks.goals_lines_with_weights)
+class GoalsLinesWithWeights(CornersLinesResult2):
+    def stack_bar_plot(self, **kwargs):
+        d = super().stack_bar_plot(**kwargs)
+        return {"goals lines": d['corners lines weighted']}
+
+@sign_for(tasks.shots_on_target_lines_weighted)
+class ShotsOnTargetLines(GoalsLinesWithWeights):
+    def stack_bar_plot(self, **kwargs):
+        d = super().stack_bar_plot(**kwargs)
+        return {"shots on target lines": d['goals lines']}
+
+@sign_for(tasks.foul_lines_weighted)
+class ShotsOnTargetLines(GoalsLinesWithWeights):
+    def stack_bar_plot(self, **kwargs):
+        d = super().stack_bar_plot(**kwargs)
+        return {"fouls lines": d['goals lines']}
+
+@sign_for(tasks.yellows_lines_weighted)
+class ShotsOnTargetLines(GoalsLinesWithWeights):
+    def stack_bar_plot(self, **kwargs):
+        d = super().stack_bar_plot(**kwargs)
+        return {"yellow cards lines": d['goals lines']}
+
 @sign_for(tasks.correlation_rate_on_off_to_result)
 class TeamScoringOnPieChart(Result):
     @cached_property
