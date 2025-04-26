@@ -8,13 +8,22 @@
 {% block template %}
     <div class="container min-h-75">
         <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Created at</th>
-                    <th>Summary</th>
-                    <th>Completed?</th>
-                    <th>Show Result</th>
-                </tr>
+            <thead class="sticky-top">
+                {% if translation.get_language() == "pl" %}
+                    <tr>
+                        <th>Utworzony o</th>
+                        <th>Podsumowanie</th>
+                        <th>Ukończony?</th>
+                        <th>Akcje</th>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <th>Created at</th>
+                        <th>Summary</th>
+                        <th>Completed?</th>
+                        <th>Show Result</th>
+                    </tr>
+                {% endif %}
             </thead>
             <tbody>
             {% for order in orders %}

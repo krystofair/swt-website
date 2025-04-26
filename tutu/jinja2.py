@@ -1,4 +1,5 @@
 from django.templatetags.static import static
+from django.templatetags.i18n import translation
 from django.urls import reverse
 import os
 
@@ -11,7 +12,8 @@ def environment(**options):
         {
             "static": static,
             "url": reverse,
-            "environ": os.environ
+            "environ": os.environ,
+            "translation": translation
         }
     )
     return env

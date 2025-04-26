@@ -5,13 +5,25 @@
             <h1 class="modal-title fs-5">Search help</h1>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <div class="modal-body text-center card-body">
-            When you choose Country, leagues will be loaded dynamically. You need to choose
-            Country and League to load matches on the list. If you enter Team without other
-            options, then you will search across all leagues and countries. You can add Country
-            to your Team for restrict results, The same is with League, but League can be set always
-            with Country is set before. And remember you searching here games.
-        </div>
+        {% if translation.get_language() == "pl" %}
+            <div class="modal-body text-center card-body">
+                Wyszukiwanie działa tak, że możesz wybrać kraj i ligę z której mecze chcesz wybrać.
+                Powinny być posortowane wg daty, czyli najnowsze na samej górze. Jeśli wpiszesz nazwę
+                drużyny, mecze będą wyszukiwane we wszystkich ligach ze wszystkick krajów dla tej drużyny.
+                Możesz ograniczyć wyszukiwanie do konkretnego kraju, wtedy mecze będą dla tej drużyny w tym
+                kraju oraz możesz dodać ligę i ograniczyć jeszcze bardziej.
+                <br />
+                Podsumowywując nie możesz wybrać samego kraju i liczyć że coś znajdziesz. :)
+            </div>
+        {% else %}
+            <div class="modal-body text-center card-body">
+                When you choose Country, leagues will be loaded dynamically. You need to choose
+                Country and League to load matches on the list. If you enter Team without other
+                options, then you will search across all leagues and countries. You can add Country
+                to your Team for restrict results, The same is with League, but League can be set always
+                with Country is set before. And remember you searching here games.
+            </div>
+        {% endif %}
         <div class="modal-footer card-body">
             <button type="button" class="btn-teriary" data-bs-dismiss="modal">Ok</button>
         </div>
